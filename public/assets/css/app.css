@@ -1,0 +1,102 @@
+/* Hand-written CSS only - no framework, per project brief §4. */
+
+:root {
+    --color-bg: #f5f6f8;
+    --color-surface: #ffffff;
+    --color-text: #1f2430;
+    --color-border: #d9dce1;
+    --color-primary: #2b5fd9;
+    --color-danger: #c0392b;
+    --space-2: 0.5rem;
+    --space-3: 1rem;
+    --space-4: 1.5rem;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-4);
+}
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: var(--space-4);
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+input, select, textarea, button {
+    font: inherit;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    margin-bottom: var(--space-3);
+}
+
+input:focus, select:focus, textarea:focus, button:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+button {
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    text-align: left;
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+}
+
+@media (max-width: 480px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    th {
+        display: none;
+    }
+
+    td {
+        padding-left: 40%;
+        position: relative;
+    }
+
+    td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: var(--space-2);
+        font-weight: 600;
+    }
+}
