@@ -1,7 +1,10 @@
 /vendor/
 /.env
+/.env.local
 /.phpunit.cache/
 /.phpunit.result.cache
 *.log
 docker/mysql-data/
 docker/redis-data/
+/public/uploads/products/*
+!/public/uploads/products/.gitkeep

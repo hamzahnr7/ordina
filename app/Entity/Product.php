@@ -15,6 +15,7 @@ final class Product
         public readonly float $buyPrice,
         public readonly float $sellPrice,
         public readonly int $reorderPoint,
+        public readonly ?string $imagePath = null,
         public readonly bool $isActive = true,
     ) {
     }
@@ -31,6 +32,7 @@ final class Product
             buyPrice: (float) $row['buy_price'],
             sellPrice: (float) $row['sell_price'],
             reorderPoint: (int) $row['reorder_point'],
+            imagePath: $row['image_path'] !== null ? (string) $row['image_path'] : null,
             isActive: (bool) $row['is_active'],
         );
     }

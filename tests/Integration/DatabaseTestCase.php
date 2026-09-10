@@ -21,11 +21,11 @@ abstract class DatabaseTestCase extends TestCase
     protected function setUp(): void
     {
         $this->pdo = Database::connect(
-            Config::get('DB_HOST', 'mysql'),
-            Config::get('DB_PORT', '3306'),
+            Config::get('DB_TEST_HOST', 'localhost'),
+            Config::get('DB_TEST_PORT', '3306'),
             Config::get('DB_TEST_DATABASE', 'ordina_test'),
-            Config::get('DB_USERNAME', 'ordina'),
-            Config::get('DB_PASSWORD', '')
+            Config::get('DB_TEST_USERNAME', 'tester'),
+            Config::get('DB_TEST_PASSWORD', 'testing123')
         );
     }
 }

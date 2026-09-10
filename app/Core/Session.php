@@ -51,4 +51,18 @@ final class Session
             session_destroy();
         }
     }
+
+    /** One-request-lifetime values (validation errors, form re-fill, flash messages). */
+    public static function flash(string $key, mixed $value): void
+    {
+        $_SESSION['_flash'][$key] = $value;
+    }
+
+    public static function pullFlash(string $key, mixed $default = null): mixed
+    {
+        $value = $_SESSION['_flash'][$key] ?? $default;
+        unset($_SESSION['_flash'][$key]);
+
+        return $value;
+    }
 }

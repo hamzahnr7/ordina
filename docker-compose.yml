@@ -15,14 +15,20 @@ services:
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_TEST_HOST: ${DB_TEST_HOST}
+      DB_TEST_PORT: ${DB_TEST_PORT}
       DB_TEST_DATABASE: ${DB_TEST_DATABASE}
+      DB_TEST_USERNAME: ${DB_TEST_USERNAME}
+      DB_TEST_PASSWORD: ${DB_TEST_PASSWORD}
       SESSION_DRIVER: ${SESSION_DRIVER}
       REDIS_ENABLED: ${REDIS_ENABLED}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   mysql:
     image: mysql:8.0
@@ -38,10 +44,15 @@ services:
       - mysql-data:/var/lib/mysql
       - ./database:/docker-entrypoint-initdb.d
     healthcheck:
+      # On a fresh/empty volume, mysqld only starts accepting connections on
+      # 3306 *after* every docker-entrypoint-initdb.d script has finished -
+      # so this doubles as "schema-and-seed.sql + test-db-init.sql are done",
+      # not just "the process is up". `web`'s depends_on waits on this.
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 30s
 
   # Session store only (see docs/architecture/adr-0003-redis-session-store.md).
   # MySQL remains the single system-of-record for all business/inventory data.
