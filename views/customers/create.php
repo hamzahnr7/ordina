@@ -1,11 +1,11 @@
+<a href="/customers" class="back-link">&larr; Kembali ke daftar customer</a>
 <h1>Tambah Customer</h1>
-<p><a href="/customers">&larr; Kembali ke daftar customer</a></p>
 
 <?php if (!empty($errors)): ?>
-    <div class="card" style="border-color:var(--color-danger);">
+    <div class="alert alert-danger">
         <ul>
             <?php foreach ($errors as $message): ?>
-                <li style="color:var(--color-danger);"><?= htmlspecialchars($message, ENT_QUOTES) ?></li>
+                <li><?= htmlspecialchars($message, ENT_QUOTES) ?></li>
             <?php endforeach; ?>
         </ul>
     </div>

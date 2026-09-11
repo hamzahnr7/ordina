@@ -5,13 +5,17 @@ multi-warehouse inventory, purchase orders, and sales orders across three
 roles (Admin, Sales, Warehouse Staff). See `Project Brief - Programmer.pdf`
 for the full specification this repo implements.
 
-> **Status: auth, user management, and master data implemented; PO/SO
-> workflows still pending.** Login/session, role-based authorization, User
-> management (USR-01), and Category/Warehouse/Supplier/Customer/Product CRUD
-> with search/filter/pagination (PRD-01, WH-01, FIND-01) are done. Purchase
-> Order, Sales Order, dashboard aggregation, and reports are not implemented
-> yet - see `docs/quality/tech-debt.md` and the backlog in
-> `docs/planning/user-stories.md`.
+> **Status: every WAJIB functional requirement in the brief's §2 is
+> implemented.** Login/session, role-based authorization, User management
+> (USR-01), master data CRUD with search/filter/pagination (PRD-01, WH-01,
+> FIND-01), Purchase Order + goods receipt (PO-01), Sales Order + approval +
+> goods issue with concurrency-safe oversell prevention (SO-01, ARCH-02),
+> per-role dashboard aggregation (DASH-01), and date-ranged CSV reports
+> (REPORT-01) are all done. What's left is polish and evidence, not
+> features - see `docs/quality/tech-debt.md` and the backlog in
+> `docs/planning/user-stories.md` for the honest remaining list (seed data
+> volume, a few TEST-02 integration tests, the refactor log/static analysis
+> report content, etc.).
 
 ## Tech stack
 - PHP 8.2+ native OOP (Controller/Service/Repository/Entity), no framework
@@ -71,6 +75,75 @@ all soft-deactivate only, never hard-delete. Product additionally supports:
   Sales views the catalog, Warehouse Staff checks stock) via
   `Controller::authorizeAny()` - see `docs/architecture/rbac-and-menu-access.md`.
 
+## Purchase Order & goods receipt (PO-01, ARCH-02)
+Admin and Warehouse Staff (Sales has no PO permission at all) can create a
+Purchase Order (`/purchase-orders`) as a `Draft`, send it to the supplier
+(`Ordered`), and process goods receipt against it - partial or full. FIND-01
+applies here too: search by PO number/supplier, filter by status, sort by
+order date, 10-per-page pagination.
+
+Goods receipt writes `ProductStock` + `StockLedger` (+ recomputes the PO's
+status) inside one real transaction, via a new
+`App\Core\Transaction\TransactionManagerInterface` seam - `PdoTransactionManager`
+in production, `NullTransactionManager` in `tests/Unit/PurchaseOrderServiceTest.php`
+so the whole flow (partial receipt, full receipt, over-receipt rejection,
+status transitions) is unit-tested without touching MySQL. See
+`docs/architecture/adr-0002-concurrency-safe-stock.md` for why PO's receipt
+only needed atomicity, not the concurrency mechanism ARCH-02 asks for -
+that's SO-01's job, below.
+
+## Sales Order, approval & goods issue (SO-01, ARCH-02)
+Sales creates a Sales Order (`/sales-orders`) as a `Draft` and submits it for
+approval (`PendingApproval`); Admin approves or rejects it - **never their
+own order**, enforced server-side in `SalesOrderService::approve()`
+regardless of role (mirrors the `chk_so_approver_not_creator` CHECK
+constraint, checked here first for a clean error message); Warehouse Staff
+(or Admin) processes goods issue once `Approved`, moving it to `Fulfilled`.
+Sales only ever sees/acts on their own orders (§1.2 "milik sendiri") -
+`SalesOrderController::assertOwnsOrAdmin()`.
+
+**This is where ARCH-02's oversell prevention is actually load-bearing**
+(unlike PO's goods receipt, which can only ever increase stock):
+`ProductStockRepositoryInterface::decrementIfAvailable()` does the
+check-and-decrement as one atomic conditional `UPDATE`
+(`... WHERE quantity >= :qty`), relying on InnoDB's row lock during that
+single statement to make it race-free - see
+`docs/architecture/adr-0002-concurrency-safe-stock.md` for the full
+reasoning. `processGoodsIssue()` loops every item inside one transaction and
+rolls back entirely the moment any item's stock is insufficient - proven by
+`tests/Unit/SalesOrderServiceTest.php`'s controlled, sequential scenario
+(first order exhausts stock, second order's goods issue is rejected, not
+oversold - real parallel threads aren't required per the brief).
+
+## Dashboard (DASH-01)
+Every number on `/dashboard` comes from a live aggregation query via
+`DashboardRepositoryInterface`/`MysqlDashboardRepository` - never a static
+value:
+- **Admin**: total inventory value (stock × buy_price), count of products
+  below reorder point (+ a preview list), Purchase Order counts per status,
+  Sales Order counts per status (all orders).
+- **Sales**: their own Sales Order counts per status only
+  (`salesOrderStatusCounts($ownerId)`).
+- **Warehouse Staff**: pending goods-receipt count (POs `Ordered`/`PartiallyReceived`),
+  pending goods-issue count (SOs `Approved`), and the same low-stock preview
+  Admin sees.
+
+## Reports (REPORT-01)
+`/reports` - date range picker (`from`/`to`), then a button per report the
+signed-in role may download (mirrors §1.2's "Mengunduh laporan" row exactly
+via `ReportController::index()`'s `canStock`/`canOrders` flags):
+- **Stock ledger CSV** (`/reports/stock-ledger.csv`) - every `StockLedger`
+  movement in the range. Admin and Warehouse Staff only.
+- **Orders CSV** (`/reports/orders.csv`) - PO + SO status rows in the range.
+  Admin sees both order types, all creators; Sales sees only their own SO
+  rows (no PO rows - Sales has no PO involvement at all).
+
+`ReportService` reads from the same `PurchaseOrderRepositoryInterface`/
+`SalesOrderRepositoryInterface`/`StockLedgerRepositoryInterface` (via new
+`findForReport()`/`findByDateRange()` methods) that `DashboardService`
+already uses, per the brief's explicit "dihasilkan dari query agregasi/rekap
+yang sama dengan dashboard" - not a separate one-off query path.
+
 ## Tests & static analysis
 `tests/Integration` (TEST-02) connects to a separate `ordina_test` database
 with its own `tester` credentials (see `.env.example`'s `DB_TEST_*` vars),
@@ -118,14 +191,24 @@ docs/testing/           test scenarios & results
 ```
 
 ## Known limitations
-- PO/SO business logic, dashboard aggregation (DASH-01), reports, and the
-  ARCH-02 concurrency mechanism are not implemented yet.
+- No "edit items" action for a Draft PO or SO, and validation errors on
+  either create form don't restore the dynamic item rows (tracked in
+  `docs/quality/tech-debt.md`).
+- `decrementIfAvailable()`'s oversell prevention, `MysqlDashboardRepository`'s
+  aggregation queries, and the REPORT-01 CSV endpoints are unit-tested/
+  hand-reviewed only - not yet verified as TEST-02 integration tests against
+  real MySQL (tracked in `docs/quality/tech-debt.md` #16/#17/#18).
 - Seed data is intentionally small; must grow to the §7.1 minimums (30
   products, 25 combined orders, 2 warehouses, 2+2 non-Admin accounts)
   before final submission.
 - No password-reset action for existing users yet (see `docs/quality/tech-debt.md`).
 - Replacing a product's image on edit doesn't delete the old file from
   `public/uploads/products/` yet (tracked in `docs/quality/tech-debt.md`).
+- `docs/quality/refactor-log.md` and `docs/quality/static-analysis.md` are
+  still templates awaiting real content (a genuine refactor did happen this
+  session - see `docs/architecture/class-diagram-as-built.md`'s
+  `View::render()` extraction - but it hasn't been written up there yet, and
+  `composer analyse` hasn't been run in an environment with PHP available).
 
 ## AI usage
 Disclosed in `ai-usage-log.md`.

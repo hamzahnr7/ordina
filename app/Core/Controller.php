@@ -15,15 +15,7 @@ abstract class Controller
     /** @param array<string, mixed> $data */
     protected function view(string $view, array $data = []): void
     {
-        extract($data);
-
-        ob_start();
-        require __DIR__ . "/../../views/{$view}.php";
-        $content = ob_get_clean();
-
-        $title = $data['title'] ?? 'Ordina Inventory & Order Management';
-
-        require __DIR__ . '/../../views/layouts/app.php';
+        View::render($view, $data);
     }
 
     protected function json(mixed $data, int $status = 200): void

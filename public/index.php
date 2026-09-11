@@ -10,6 +10,7 @@ use App\Core\Http\Exceptions\NotFoundException;
 use App\Core\Http\Exceptions\UnauthenticatedException;
 use App\Core\Router;
 use App\Core\Session;
+use App\Core\View;
 use App\Service\Exception\ForbiddenOperationException;
 
 Config::load(__DIR__ . '/../.env');
@@ -31,13 +32,10 @@ try {
 } catch (UnauthenticatedException) {
     header('Location: /login');
 } catch (AuthorizationException | ForbiddenOperationException) {
-    http_response_code(403);
-    require __DIR__ . '/../views/errors/403.php';
+    View::render('errors/403', ['title' => '403 - Akses Ditolak'], 403);
 } catch (NotFoundException) {
-    http_response_code(404);
-    require __DIR__ . '/../views/errors/404.php';
+    View::render('errors/404', ['title' => '404 - Tidak Ditemukan'], 404);
 } catch (\Throwable $e) {
     error_log((string) $e);
-    http_response_code(500);
-    require __DIR__ . '/../views/errors/500.php';
+    View::render('errors/500', ['title' => '500 - Kesalahan Server'], 500);
 }

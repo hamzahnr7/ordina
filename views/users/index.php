@@ -1,13 +1,16 @@
-<h1>Manajemen User</h1>
-<p><a href="/dashboard">&larr; Kembali ke dashboard</a></p>
+<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
+
+<div class="toolbar">
+    <h1 style="margin:0;">Manajemen User</h1>
+    <a href="/users/create" class="btn">Tambah User</a>
+</div>
 
 <?php if (!empty($success)): ?>
-    <p style="color:green;"><?= htmlspecialchars($success, ENT_QUOTES) ?></p>
+    <div class="alert alert-success"><?= htmlspecialchars($success, ENT_QUOTES) ?></div>
 <?php endif; ?>
 
-<p><a href="/users/create"><button type="button">Tambah User</button></a></p>
-
 <div class="card">
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -20,23 +23,27 @@
     </thead>
     <tbody>
     <?php if ($users === []): ?>
-        <tr><td colspan="5">Belum ada akun Sales/Warehouse Staff.</td></tr>
+        <tr class="empty-row"><td colspan="5">Belum ada akun Sales/Warehouse Staff.</td></tr>
     <?php endif; ?>
     <?php foreach ($users as $u): ?>
         <tr>
             <td data-label="Nama"><?= htmlspecialchars($u->name, ENT_QUOTES) ?></td>
             <td data-label="Email"><?= htmlspecialchars($u->email, ENT_QUOTES) ?></td>
             <td data-label="Role"><?= htmlspecialchars($u->role->label(), ENT_QUOTES) ?></td>
-            <td data-label="Status"><?= $u->isActive ? 'Aktif' : 'Nonaktif' ?></td>
+            <td data-label="Status">
+                <span class="badge <?= $u->isActive ? 'badge-success' : 'badge-muted' ?>">
+                    <?= $u->isActive ? 'Aktif' : 'Nonaktif' ?>
+                </span>
+            </td>
             <td data-label="Aksi">
-                <a href="/users/<?= (int) $u->id ?>/edit">Edit</a>
-                &nbsp;
+                <a href="/users/<?= (int) $u->id ?>/edit" class="btn btn-secondary">Edit</a>
                 <form method="post" action="/users/<?= (int) $u->id ?>/toggle-active" style="display:inline;">
-                    <button type="submit"><?= $u->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
+                    <button type="submit" class="btn-secondary"><?= $u->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
                 </form>
             </td>
         </tr>
     <?php endforeach; ?>
     </tbody>
 </table>
+</div>
 </div>

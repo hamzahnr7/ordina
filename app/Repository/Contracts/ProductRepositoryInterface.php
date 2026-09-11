@@ -17,6 +17,9 @@ interface ProductRepositoryInterface
     /** @return list<Product> */
     public function findAll(): array;
 
+    /** For dropdowns on other forms (e.g. Purchase Order items) - active products only. */
+    public function findActive(): array;
+
     /**
      * FIND-01: search by name/SKU, filter by category and stock status,
      * paginated. Returns denormalized rows (category_name, total_stock

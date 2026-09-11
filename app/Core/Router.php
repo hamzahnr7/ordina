@@ -49,7 +49,6 @@ final class Router
             }
         }
 
-        http_response_code(404);
-        require __DIR__ . '/../../views/errors/404.php';
+        View::render('errors/404', ['title' => '404 - Tidak Ditemukan'], 404);
     }
 }

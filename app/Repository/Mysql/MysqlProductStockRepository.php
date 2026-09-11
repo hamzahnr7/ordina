@@ -26,4 +26,42 @@ final class MysqlProductStockRepository implements ProductStockRepositoryInterfa
 
         return $stmt->fetchAll();
     }
+
+    public function incrementQuantity(int $productId, int $warehouseId, int $delta): void
+    {
+        $existing = $this->connection->prepare(
+            'SELECT id FROM product_stocks WHERE product_id = :product_id AND warehouse_id = :warehouse_id LIMIT 1'
+        );
+        $existing->execute(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
+        $row = $existing->fetch();
+
+        if ($row === false) {
+            $insert = $this->connection->prepare(
+                'INSERT INTO product_stocks (product_id, warehouse_id, quantity) VALUES (:product_id, :warehouse_id, :quantity)'
+            );
+            $insert->execute(['product_id' => $productId, 'warehouse_id' => $warehouseId, 'quantity' => $delta]);
+
+            return;
+        }
+
+        $update = $this->connection->prepare('UPDATE product_stocks SET quantity = quantity + :delta WHERE id = :id');
+        $update->execute(['delta' => $delta, 'id' => $row['id']]);
+    }
+
+    public function decrementIfAvailable(int $productId, int $warehouseId, int $qty): bool
+    {
+        $stmt = $this->connection->prepare(
+            'UPDATE product_stocks
+             SET quantity = quantity - :qty
+             WHERE product_id = :product_id AND warehouse_id = :warehouse_id AND quantity >= :qty_check'
+        );
+        $stmt->execute([
+            'qty' => $qty,
+            'product_id' => $productId,
+            'warehouse_id' => $warehouseId,
+            'qty_check' => $qty,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
 }

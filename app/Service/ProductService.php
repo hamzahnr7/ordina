@@ -24,13 +24,17 @@ final class ProductService
     }
 
     /**
+     * Filters are expected pre-normalized by the caller (trimmed search
+     * string, int-or-absent category_id, validated stock_status enum) -
+     * see ProductController::index().
+     *
      * @param array{search?:string, category_id?:int, stock_status?:string} $filters
      * @return array{items: list<array<string, mixed>>, total: int, page: int, perPage: int, totalPages: int}
      */
     public function paginate(array $filters, int $page): array
     {
         $page = max(1, $page);
-        $result = $this->products->paginateForListing($this->normalizeFilters($filters), $page, self::PER_PAGE);
+        $result = $this->products->paginateForListing($filters, $page, self::PER_PAGE);
         $totalPages = max(1, (int) ceil($result['total'] / self::PER_PAGE));
 
         return [
@@ -45,6 +49,12 @@ final class ProductService
     public function find(int $id): ?Product
     {
         return $this->products->findById($id);
+    }
+
+    /** For dropdowns on other forms (e.g. Purchase Order items). */
+    public function listActive(): array
+    {
+        return $this->products->findActive();
     }
 
     /**
@@ -75,8 +85,8 @@ final class ProductService
      * The low-stock rule (§2.5 DASH-01/FIND-01): total stock across all
      * warehouses below reorder_point. Kept as a pure, trivially unit-tested
      * function - see tests/Unit/ProductServiceTest.php - and mirrored (not
-     * called from, since it runs in SQL) by
-     * MysqlProductRepository::paginateForListing()'s HAVING clause.
+     * called from, since it runs in SQL) by the stock_status condition in
+     * MysqlProductRepository::paginateForListing().
      */
     public static function isLowStock(int $totalStock, int $reorderPoint): bool
     {

@@ -1,27 +1,29 @@
 <?php
 /** @var array{items: list<array<string,mixed>>, total:int, page:int, perPage:int, totalPages:int} $result */
-$queryWithout = static function (array $overrides) use ($filters, $result): string {
+$queryWithout = static function (array $overrides) use ($filters): string {
     return '?' . http_build_query(array_filter([...$filters, ...$overrides]));
 };
 ?>
-<h1>Produk</h1>
-<p><a href="/dashboard">&larr; Kembali ke dashboard</a></p>
+<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
+
+<div class="toolbar">
+    <h1 style="margin:0;">Produk</h1>
+    <?php if ($canManage): ?>
+        <a href="/products/create" class="btn">Tambah Produk</a>
+    <?php endif; ?>
+</div>
 
 <?php if (!empty($success)): ?>
-    <p style="color:green;"><?= htmlspecialchars($success, ENT_QUOTES) ?></p>
+    <div class="alert alert-success"><?= htmlspecialchars($success, ENT_QUOTES) ?></div>
 <?php endif; ?>
 
-<?php if ($canManage): ?>
-    <p><a href="/products/create"><button type="button">Tambah Produk</button></a></p>
-<?php endif; ?>
-
-<form method="get" action="/products" class="card">
-    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
-        <div style="flex:1;min-width:180px;">
+<form method="get" action="/products" class="card filter-bar">
+    <div class="filter-row">
+        <div class="filter-field">
             <label for="search">Cari (nama/SKU)</label>
             <input type="text" id="search" name="search" value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES) ?>">
         </div>
-        <div style="min-width:160px;">
+        <div class="filter-field">
             <label for="category_id">Kategori</label>
             <select id="category_id" name="category_id">
                 <option value="">Semua</option>
@@ -32,7 +34,7 @@ $queryWithout = static function (array $overrides) use ($filters, $result): stri
                 <?php endforeach; ?>
             </select>
         </div>
-        <div style="min-width:160px;">
+        <div class="filter-field">
             <label for="stock_status">Status Stok</label>
             <select id="stock_status" name="stock_status">
                 <option value="">Semua</option>
@@ -47,6 +49,7 @@ $queryWithout = static function (array $overrides) use ($filters, $result): stri
 </form>
 
 <div class="card">
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -56,7 +59,7 @@ $queryWithout = static function (array $overrides) use ($filters, $result): stri
     </thead>
     <tbody>
     <?php if ($result['items'] === []): ?>
-        <tr><td colspan="8">Tidak ada produk yang cocok dengan filter ini.</td></tr>
+        <tr class="empty-row"><td colspan="8">Tidak ada produk yang cocok dengan filter ini.</td></tr>
     <?php endif; ?>
     <?php foreach ($result['items'] as $item): ?>
         <?php $isLow = \App\Service\ProductService::isLowStock((int) $item['total_stock'], (int) $item['reorder_point']); ?>
@@ -66,16 +69,20 @@ $queryWithout = static function (array $overrides) use ($filters, $result): stri
             <td data-label="Kategori"><?= htmlspecialchars($item['category_name'], ENT_QUOTES) ?></td>
             <td data-label="Unit"><?= htmlspecialchars($item['unit'], ENT_QUOTES) ?></td>
             <td data-label="Harga Jual"><?= number_format((float) $item['sell_price'], 0, ',', '.') ?></td>
-            <td data-label="Stok" style="<?= $isLow ? 'color:var(--color-danger);font-weight:600;' : '' ?>">
-                <?= (int) $item['total_stock'] ?><?= $isLow ? ' (low)' : '' ?>
+            <td data-label="Stok">
+                <?= (int) $item['total_stock'] ?>
+                <?php if ($isLow): ?><span class="badge badge-danger">low</span><?php endif; ?>
             </td>
-            <td data-label="Status"><?= ((int) $item['is_active']) ? 'Aktif' : 'Nonaktif' ?></td>
+            <td data-label="Status">
+                <span class="badge <?= ((int) $item['is_active']) ? 'badge-success' : 'badge-muted' ?>">
+                    <?= ((int) $item['is_active']) ? 'Aktif' : 'Nonaktif' ?>
+                </span>
+            </td>
             <?php if ($canManage): ?>
                 <td data-label="Aksi">
-                    <a href="/products/<?= (int) $item['id'] ?>/edit">Edit</a>
-                    &nbsp;
+                    <a href="/products/<?= (int) $item['id'] ?>/edit" class="btn btn-secondary">Edit</a>
                     <form method="post" action="/products/<?= (int) $item['id'] ?>/toggle-active" style="display:inline;">
-                        <button type="submit"><?= ((int) $item['is_active']) ? 'Nonaktifkan' : 'Aktifkan' ?></button>
+                        <button type="submit" class="btn-secondary"><?= ((int) $item['is_active']) ? 'Nonaktifkan' : 'Aktifkan' ?></button>
                     </form>
                 </td>
             <?php endif; ?>
@@ -84,9 +91,10 @@ $queryWithout = static function (array $overrides) use ($filters, $result): stri
     </tbody>
 </table>
 </div>
+</div>
 
 <?php if ($result['totalPages'] > 1): ?>
-    <nav aria-label="Pagination" style="margin-top:1rem;display:flex;gap:.5rem;">
+    <nav class="pagination" aria-label="Pagination">
         <?php for ($p = 1; $p <= $result['totalPages']; $p++): ?>
             <?php if ($p === $result['page']): ?>
                 <strong><?= $p ?></strong>

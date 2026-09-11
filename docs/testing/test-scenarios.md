@@ -22,15 +22,43 @@
 | Product validation (PRD-01) | Duplicate SKU rejected | `tests/Unit/ProductServiceTest.php` | Passing |
 | Product validation (PRD-01) | Unknown category_id rejected | `tests/Unit/ProductServiceTest.php` | Passing |
 | Product validation (PRD-01) | Negative reorder_point rejected | `tests/Unit/ProductServiceTest.php` | Passing |
-| PO validation | Order date cannot be in the past | TBD | Not started |
-| SO status transition | Draft -> PendingApproval -> Approved -> Fulfilled is the only valid path | TBD | Not started |
+| PO validation (PO-01) | Create rejects an empty item list | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO validation (PO-01) | Create rejects an unknown supplier_id | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO status transition (PO-01) | New PO starts as Draft | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO status transition (PO-01) | markOrdered requires Draft; rejects a second call | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO goods receipt (PO-01/ARCH-02) | Rejected while PO is still Draft | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO goods receipt (PO-01/ARCH-02) | Partial receipt: status -> PartiallyReceived, ProductStock incremented, one StockLedger row written | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO goods receipt (PO-01/ARCH-02) | Receiving the remainder: status -> Received, stock matches qty_ordered, two StockLedger rows total | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO goods receipt (PO-01) | Receiving more than what's left on a still-open PO is rejected | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO goods receipt (PO-01) | Receiving anything against an already fully-Received PO is rejected | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| PO cancellation (PO-01) | Cannot cancel once fully Received | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| SO validation (SO-01) | Create rejects an empty item list | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO validation (SO-01) | Create rejects an unknown customer_id | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO status transition (SO-01) | submit(): Draft -> PendingApproval; rejects a second submit | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO status transition (SO-01) | reject(): PendingApproval -> Cancelled | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO status transition (SO-01) | cancel() rejected once Fulfilled | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO authorization (SO-01 SoD) | The creator cannot approve their own Sales Order, even as Admin | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO authorization (SO-01 SoD) | A different user can approve it | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO goods issue (SO-01/ARCH-02) | Rejected unless status is Approved | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO goods issue (SO-01/ARCH-02) | Decrements ProductStock, writes one Issue StockLedger row, sets Fulfilled | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO goods issue (SO-01/ARCH-02) | **The core scenario**: second Sales Order's goods issue rejected once the first exhausted the same product+warehouse's stock - left Approved, not oversold, no ledger row written | `tests/Unit/SalesOrderServiceTest.php` | Passing |
 
 ## Integration tests (TEST-02) - target: >=3, real MySQL in Docker
 | Scenario | Test file | Status |
 |----------|-----------|--------|
 | DB connectivity smoke test | `tests/Integration/ExampleConnectionTest.php` | Passing (scaffold) |
-| Goods receipt increases ProductStock + writes Receipt ledger row | TBD | Not started |
-| Second goods issue rejected once stock exhausted by the first (ARCH-02) | TBD | Not started |
+| Goods receipt increases ProductStock + writes Receipt ledger row against real MySQL | TBD | Not started (unit-tested against InMemory fakes in `PurchaseOrderServiceTest`, not yet against real MySQL) |
+| Second goods issue rejected once stock exhausted by the first (ARCH-02), against real MySQL | TBD | Not started (unit-tested against InMemory fakes in `SalesOrderServiceTest`; `decrementIfAvailable()`'s actual InnoDB locking behavior not yet verified end-to-end - see `docs/quality/tech-debt.md` #16) |
+| REPORT-01 CSV export produces correct rows for a given date range, against real MySQL | TBD | Not started (see `docs/quality/tech-debt.md` #18) |
+
+## REPORT-01 evidence (manual, per brief - "File CSV hasil ekspor dengan rentang tanggal berbeda")
+| Scenario | Expected | Actual |
+|----------|----------|--------|
+| Admin downloads `/reports/stock-ledger.csv` for a range with known receipts/issues | CSV rows match `stock_ledger` rows in that range | TBD - needs manual click-through with real data |
+| Admin downloads `/reports/orders.csv` | Includes both PO and SO rows, all creators | TBD |
+| Sales downloads `/reports/orders.csv` | Only their own SO rows, no PO rows at all | TBD |
+| Warehouse Staff visits `/reports` | Only the stock-ledger download is offered, no orders download | TBD |
+| Two different date ranges on the same report | Different row counts/content | TBD |
 
 ## Validation scenarios (VAL-01)
 | Field/Rule | Invalid input tried | Expected result | Actual result |
@@ -38,13 +66,13 @@
 | Product SKU | Duplicate SKU | Rejected, form re-shown with data intact | Rejected (`ProductServiceTest`); form re-fill via `Session::flash('old', ...)` not yet manually verified in-browser |
 | Product reorder_point | Negative number | Rejected | Rejected (`ProductServiceTest`) |
 | User email | Duplicate email | Rejected | Rejected (`UserServiceTest`) |
-| SO qty | 0 or negative | Rejected | TBD (SO not implemented yet) |
+| SO qty | 0 or negative | Rejected | Rejected (`SalesOrderServiceTest`'s item validation, same pattern as PO) |
 
 ## Failure paths (ERR-01)
 | Path | Expected | Actual |
 |------|----------|--------|
 | Access protected page without session | Redirect to /login | TBD |
-| Sales calls approve endpoint on own order | 403 | TBD |
+| Sales calls approve endpoint on own order | 403 (lacks `ApproveSalesOrder` entirely - `GateTest`); Admin approving their own SO is separately rejected by `SalesOrderService::approve()` (`SalesOrderServiceTest`) | Rejected at both layers; manual click-through in browser not yet done |
 | Unknown SKU via API-01 | 404 JSON | TBD |
 
 ## How to run

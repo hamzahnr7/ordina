@@ -25,6 +25,12 @@ final class CustomerService
         return $this->customers->findById($id);
     }
 
+    /** For dropdowns on other forms (e.g. Sales Order). */
+    public function listActive(): array
+    {
+        return $this->customers->findActive();
+    }
+
     /** @param array{name?:string, contact?:string, address?:string} $input */
     public function create(array $input): Customer
     {

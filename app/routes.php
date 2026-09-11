@@ -7,13 +7,19 @@ use App\Controller\AuthController;
 use App\Controller\CategoryController;
 use App\Controller\CustomerController;
 use App\Controller\DashboardController;
+use App\Controller\HomeController;
 use App\Controller\ProductController;
+use App\Controller\PurchaseOrderController;
+use App\Controller\ReportController;
+use App\Controller\SalesOrderController;
 use App\Controller\SupplierController;
 use App\Controller\UserController;
 use App\Controller\WarehouseController;
 use App\Core\Router;
 
 /** @var Router $router */
+
+$router->get('/', [HomeController::class, 'index']);
 
 $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
@@ -69,7 +75,31 @@ $router->post('/products/{id}/toggle-active', [ProductController::class, 'toggle
 $router->post('/products/{id}', [ProductController::class, 'update']);
 $router->get('/products/{id}', [ProductController::class, 'show']);
 
-$router->get('/api/products/{sku}/availability', [ProductAvailabilityController::class, 'show']);
+// Purchase Order (PO-01) - Admin + Warehouse Staff only (Sales has no PO permission at all).
+$router->get('/purchase-orders', [PurchaseOrderController::class, 'index']);
+$router->get('/purchase-orders/create', [PurchaseOrderController::class, 'create']);
+$router->post('/purchase-orders', [PurchaseOrderController::class, 'store']);
+$router->post('/purchase-orders/{id}/mark-ordered', [PurchaseOrderController::class, 'markOrdered']);
+$router->post('/purchase-orders/{id}/cancel', [PurchaseOrderController::class, 'cancel']);
+$router->post('/purchase-orders/{id}/receive', [PurchaseOrderController::class, 'receive']);
+$router->get('/purchase-orders/{id}', [PurchaseOrderController::class, 'show']);
 
-// TODO: register remaining routes as each vertical slice is built
-// (purchase-orders, sales-orders, reports).
+// Sales Order (SO-01) - Sales creates/submits own orders, Admin approves/rejects
+// (never their own - enforced server-side in SalesOrderService::approve()),
+// Warehouse Staff processes goods issue.
+$router->get('/sales-orders', [SalesOrderController::class, 'index']);
+$router->get('/sales-orders/create', [SalesOrderController::class, 'create']);
+$router->post('/sales-orders', [SalesOrderController::class, 'store']);
+$router->post('/sales-orders/{id}/submit', [SalesOrderController::class, 'submit']);
+$router->post('/sales-orders/{id}/approve', [SalesOrderController::class, 'approve']);
+$router->post('/sales-orders/{id}/reject', [SalesOrderController::class, 'reject']);
+$router->post('/sales-orders/{id}/cancel', [SalesOrderController::class, 'cancel']);
+$router->post('/sales-orders/{id}/issue', [SalesOrderController::class, 'issue']);
+$router->get('/sales-orders/{id}', [SalesOrderController::class, 'show']);
+
+// Reports (REPORT-01) - access mirrors §1.2's download-report row exactly.
+$router->get('/reports', [ReportController::class, 'index']);
+$router->get('/reports/stock-ledger.csv', [ReportController::class, 'stockLedgerCsv']);
+$router->get('/reports/orders.csv', [ReportController::class, 'ordersCsv']);
+
+$router->get('/api/products/{sku}/availability', [ProductAvailabilityController::class, 'show']);

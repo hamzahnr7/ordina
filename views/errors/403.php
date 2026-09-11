@@ -1,4 +1,6 @@
-<div class="card" style="max-width:480px;margin:4rem auto;text-align:center;">
-    <h1>403</h1>
+<div class="error-page">
+    <div class="error-code">403</div>
+    <h1>Akses ditolak</h1>
     <p>Anda tidak memiliki akses untuk melakukan aksi ini.</p>
+    <p><a href="/dashboard">Kembali ke dashboard</a></p>
 </div>

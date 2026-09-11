@@ -54,6 +54,11 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
         return array_values($this->productsById);
     }
 
+    public function findActive(): array
+    {
+        return array_values(array_filter($this->productsById, static fn (Product $p): bool => $p->isActive));
+    }
+
     public function paginateForListing(array $filters, int $page, int $perPage): array
     {
         $matches = array_values(array_filter($this->productsById, function (Product $product) use ($filters): bool {

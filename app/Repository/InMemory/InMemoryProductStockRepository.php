@@ -21,4 +21,41 @@ final class InMemoryProductStockRepository implements ProductStockRepositoryInte
     {
         return $this->stocks[$productId] ?? [];
     }
+
+    public function incrementQuantity(int $productId, int $warehouseId, int $delta): void
+    {
+        $rows = $this->stocks[$productId] ?? [];
+
+        foreach ($rows as $index => $row) {
+            if ($row['warehouse_id'] === $warehouseId) {
+                $rows[$index]['quantity'] += $delta;
+                $this->stocks[$productId] = $rows;
+
+                return;
+            }
+        }
+
+        $rows[] = ['warehouse_id' => $warehouseId, 'warehouse_name' => "Warehouse #{$warehouseId}", 'quantity' => $delta];
+        $this->stocks[$productId] = $rows;
+    }
+
+    public function decrementIfAvailable(int $productId, int $warehouseId, int $qty): bool
+    {
+        $rows = $this->stocks[$productId] ?? [];
+
+        foreach ($rows as $index => $row) {
+            if ($row['warehouse_id'] === $warehouseId) {
+                if ($row['quantity'] < $qty) {
+                    return false;
+                }
+
+                $rows[$index]['quantity'] -= $qty;
+                $this->stocks[$productId] = $rows;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -20,6 +20,12 @@ final class WarehouseService
         return $this->warehouses->findAll();
     }
 
+    /** For dropdowns on other forms (e.g. Purchase Order). */
+    public function listActive(): array
+    {
+        return $this->warehouses->findActive();
+    }
+
     public function find(int $id): ?Warehouse
     {
         return $this->warehouses->findById($id);

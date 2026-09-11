@@ -7,12 +7,18 @@
  * @var bool $isLowStock
  */
 ?>
-<h1><?= htmlspecialchars($product->name, ENT_QUOTES) ?></h1>
-<p><a href="/products">&larr; Kembali ke daftar produk</a></p>
+<a href="/products" class="back-link">&larr; Kembali ke daftar produk</a>
+
+<div class="toolbar">
+    <h1 style="margin:0;"><?= htmlspecialchars($product->name, ENT_QUOTES) ?></h1>
+    <span class="badge <?= $product->isActive ? 'badge-success' : 'badge-muted' ?>">
+        <?= $product->isActive ? 'Aktif' : 'Nonaktif' ?>
+    </span>
+</div>
 
 <div class="card" style="display:flex;gap:1.5rem;flex-wrap:wrap;">
     <?php if ($product->imagePath !== null): ?>
-        <img src="/<?= htmlspecialchars($product->imagePath, ENT_QUOTES) ?>" alt="" style="max-width:200px;">
+        <img src="/<?= htmlspecialchars($product->imagePath, ENT_QUOTES) ?>" alt="" style="max-width:200px;border-radius:var(--radius-sm);">
     <?php endif; ?>
     <dl>
         <dt>SKU</dt><dd><?= htmlspecialchars($product->sku, ENT_QUOTES) ?></dd>
@@ -21,17 +27,17 @@
         <dt>Harga Beli</dt><dd><?= number_format($product->buyPrice, 0, ',', '.') ?></dd>
         <dt>Harga Jual</dt><dd><?= number_format($product->sellPrice, 0, ',', '.') ?></dd>
         <dt>Reorder Point</dt><dd><?= $product->reorderPoint ?></dd>
-        <dt>Status</dt><dd><?= $product->isActive ? 'Aktif' : 'Nonaktif' ?></dd>
     </dl>
 </div>
 
 <h2>Stok per Gudang (WH-01)</h2>
 <div class="card">
+<div class="table-scroll">
     <table>
         <thead><tr><th>Gudang</th><th>Quantity</th></tr></thead>
         <tbody>
         <?php if ($stocks === []): ?>
-            <tr><td colspan="2">Belum ada catatan stok untuk produk ini di gudang manapun.</td></tr>
+            <tr class="empty-row"><td colspan="2">Belum ada catatan stok untuk produk ini di gudang manapun.</td></tr>
         <?php endif; ?>
         <?php foreach ($stocks as $stock): ?>
             <tr>
@@ -43,10 +49,12 @@
         <tfoot>
             <tr>
                 <th>Total</th>
-                <th style="<?= $isLowStock ? 'color:var(--color-danger);' : '' ?>">
-                    <?= $totalStock ?><?= $isLowStock ? ' (di bawah reorder point)' : '' ?>
+                <th>
+                    <?= $totalStock ?>
+                    <?php if ($isLowStock): ?><span class="badge badge-danger">di bawah reorder point</span><?php endif; ?>
                 </th>
             </tr>
         </tfoot>
     </table>
+</div>
 </div>

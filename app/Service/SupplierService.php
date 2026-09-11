@@ -20,6 +20,12 @@ final class SupplierService
         return $this->suppliers->findAll();
     }
 
+    /** For dropdowns on other forms (e.g. Purchase Order). */
+    public function listActive(): array
+    {
+        return $this->suppliers->findActive();
+    }
+
     public function find(int $id): ?Supplier
     {
         return $this->suppliers->findById($id);

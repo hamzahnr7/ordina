@@ -232,6 +232,28 @@ INSERT INTO product_stocks (product_id, warehouse_id, quantity) VALUES
     (3, 1, 80), (3, 2, 60),
     (4, 1, 10), (4, 2, 45);
 
--- TODO: add PurchaseOrder/SalesOrder + StockLedger seed rows once the
--- goods-receipt/goods-issue services are implemented, covering >=25 orders
--- combined with varied statuses per §7.1.
+-- Purchase Orders: kept deliberately unreceived (no stock_ledger rows) so
+-- the seed doesn't have to hand-compute matching product_stocks totals -
+-- exercise goods receipt through the app itself to see StockLedger populate.
+INSERT INTO purchase_orders (supplier_id, warehouse_id, status, order_date, created_by) VALUES
+    (1, 1, 'Draft', '2026-01-10', 1),
+    (2, 2, 'Ordered', '2026-01-05', 1);
+
+INSERT INTO purchase_order_items (purchase_order_id, product_id, qty_ordered, buy_price) VALUES
+    (1, 2, 20, 250000),
+    (2, 4, 50, 15000);
+
+-- Sales Orders: kept at Draft/PendingApproval (no goods issue) so the seed
+-- doesn't have to hand-compute matching product_stocks totals - exercise
+-- approve + goods issue through the app itself to see StockLedger populate.
+INSERT INTO sales_orders (customer_id, warehouse_id, status, created_by) VALUES
+    (1, 1, 'Draft', 2),
+    (2, 2, 'PendingApproval', 3);
+
+INSERT INTO sales_order_items (sales_order_id, product_id, qty, sell_price) VALUES
+    (1, 1, 5, 75000),
+    (2, 3, 10, 52000);
+
+-- TODO: expand PO and SO seed data to >=25 orders combined with varied
+-- statuses (including Cancelled/Fulfilled examples) before final submission,
+-- per §7.1.

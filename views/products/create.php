@@ -1,11 +1,11 @@
+<a href="/products" class="back-link">&larr; Kembali ke daftar produk</a>
 <h1>Tambah Produk</h1>
-<p><a href="/products">&larr; Kembali ke daftar produk</a></p>
 
 <?php if (!empty($errors)): ?>
-    <div class="card" style="border-color:var(--color-danger);">
+    <div class="alert alert-danger">
         <ul>
             <?php foreach ($errors as $message): ?>
-                <li style="color:var(--color-danger);"><?= htmlspecialchars($message, ENT_QUOTES) ?></li>
+                <li><?= htmlspecialchars($message, ENT_QUOTES) ?></li>
             <?php endforeach; ?>
         </ul>
     </div>

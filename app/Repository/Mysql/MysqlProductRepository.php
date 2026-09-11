@@ -55,14 +55,25 @@ final class MysqlProductRepository implements ProductRepositoryInterface
         return array_map(Product::fromArray(...), $stmt->fetchAll());
     }
 
+    public function findActive(): array
+    {
+        $stmt = $this->connection->query('SELECT * FROM products WHERE is_active = 1 ORDER BY name');
+
+        return array_map(Product::fromArray(...), $stmt->fetchAll());
+    }
+
     public function paginateForListing(array $filters, int $page, int $perPage): array
     {
         $conditions = [];
         $params = [];
 
         if (!empty($filters['search'])) {
-            $conditions[] = '(p.name LIKE :search OR p.sku LIKE :search)';
-            $params['search'] = '%' . $filters['search'] . '%';
+            // Native prepared statements (Database::connect() disables
+            // emulation) don't support binding one value to a named
+            // placeholder used twice - each occurrence needs its own name.
+            $conditions[] = '(p.name LIKE :search_name OR p.sku LIKE :search_sku)';
+            $params['search_name'] = '%' . $filters['search'] . '%';
+            $params['search_sku'] = '%' . $filters['search'] . '%';
         }
 
         if (!empty($filters['category_id'])) {
@@ -70,29 +81,30 @@ final class MysqlProductRepository implements ProductRepositoryInterface
             $params['category_id'] = $filters['category_id'];
         }
 
-        $where = $conditions === [] ? '' : 'WHERE ' . implode(' AND ', $conditions);
-
         // Mirrors ProductService::isLowStock() - keep both in sync (see
         // ProductServiceTest for the pure-logic version of this comparison).
-        $having = match ($filters['stock_status'] ?? null) {
-            'low' => 'HAVING total_stock < p.reorder_point',
-            'normal' => 'HAVING total_stock >= p.reorder_point',
-            default => '',
-        };
+        // Compared directly in WHERE (not HAVING) against the pre-aggregated
+        // `stock` subquery below, so neither query here needs a GROUP BY at
+        // all - avoids MySQL's ONLY_FULL_GROUP_BY functional-dependency
+        // rules entirely rather than relying on them.
+        if (($filters['stock_status'] ?? null) === 'low') {
+            $conditions[] = 'COALESCE(stock.total_stock, 0) < p.reorder_point';
+        } elseif (($filters['stock_status'] ?? null) === 'normal') {
+            $conditions[] = 'COALESCE(stock.total_stock, 0) >= p.reorder_point';
+        }
+
+        $where = $conditions === [] ? '' : 'WHERE ' . implode(' AND ', $conditions);
 
         $base = "FROM products p
                   JOIN categories c ON c.id = p.category_id
-                  LEFT JOIN product_stocks ps ON ps.product_id = p.id
-                  {$where}
-                  GROUP BY p.id
-                  {$having}";
+                  LEFT JOIN (
+                      SELECT product_id, SUM(quantity) AS total_stock
+                      FROM product_stocks
+                      GROUP BY product_id
+                  ) stock ON stock.product_id = p.id
+                  {$where}";
 
-        // total_stock must be selected here too (not just p.id) - HAVING
-        // references the alias, and an alias only resolves within the same
-        // query's SELECT list.
-        $countStmt = $this->connection->prepare(
-            "SELECT COUNT(*) FROM (SELECT p.id, COALESCE(SUM(ps.quantity), 0) AS total_stock {$base}) AS filtered"
-        );
+        $countStmt = $this->connection->prepare("SELECT COUNT(*) {$base}");
         $this->bindFilterParams($countStmt, $params);
         $countStmt->execute();
         $total = (int) $countStmt->fetchColumn();
@@ -100,7 +112,7 @@ final class MysqlProductRepository implements ProductRepositoryInterface
         $offset = max(0, ($page - 1) * $perPage);
 
         $itemsStmt = $this->connection->prepare(
-            "SELECT p.*, c.name AS category_name, COALESCE(SUM(ps.quantity), 0) AS total_stock
+            "SELECT p.*, c.name AS category_name, COALESCE(stock.total_stock, 0) AS total_stock
              {$base}
              ORDER BY p.name
              LIMIT :limit OFFSET :offset"
