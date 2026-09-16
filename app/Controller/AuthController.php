@@ -21,6 +21,9 @@ final class AuthController extends Controller
         $this->view('auth/login', [
             'error' => Session::pullFlash('error'),
             'old' => Session::pullFlash('old', []),
+            // Full-bleed split-screen layout - skip the padded/centered
+            // .container wrapper every other page gets (see layouts/app.php).
+            'bleed' => true,
         ]);
     }
 

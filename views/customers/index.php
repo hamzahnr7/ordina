@@ -1,8 +1,11 @@
-<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
-
-<div class="toolbar">
-    <h1 style="margin:0;">Customer</h1>
-    <a href="/customers/create" class="btn">Tambah Customer</a>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Customer</h1>
+        <p class="page-head-meta"><?= count($customers) ?> customer terdaftar</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="/customers/create" class="btn">Tambah Customer</a>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>
@@ -32,7 +35,7 @@
             <td data-label="Aksi">
                 <a href="/customers/<?= (int) $customer->id ?>/edit" class="btn btn-secondary">Edit</a>
                 <form method="post" action="/customers/<?= (int) $customer->id ?>/toggle-active" style="display:inline;">
-                    <button type="submit" class="btn-secondary"><?= $customer->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
+                    <button type="submit" class="<?= $customer->isActive ? 'btn-danger' : 'btn-secondary' ?>"><?= $customer->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
                 </form>
             </td>
         </tr>

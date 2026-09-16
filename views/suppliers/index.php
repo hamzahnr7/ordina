@@ -1,8 +1,11 @@
-<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
-
-<div class="toolbar">
-    <h1 style="margin:0;">Supplier</h1>
-    <a href="/suppliers/create" class="btn">Tambah Supplier</a>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Supplier</h1>
+        <p class="page-head-meta"><?= count($suppliers) ?> supplier terdaftar</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="/suppliers/create" class="btn">Tambah Supplier</a>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>
@@ -32,7 +35,7 @@
             <td data-label="Aksi">
                 <a href="/suppliers/<?= (int) $supplier->id ?>/edit" class="btn btn-secondary">Edit</a>
                 <form method="post" action="/suppliers/<?= (int) $supplier->id ?>/toggle-active" style="display:inline;">
-                    <button type="submit" class="btn-secondary"><?= $supplier->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
+                    <button type="submit" class="<?= $supplier->isActive ? 'btn-danger' : 'btn-secondary' ?>"><?= $supplier->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
                 </form>
             </td>
         </tr>

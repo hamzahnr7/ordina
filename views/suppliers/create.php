@@ -1,5 +1,9 @@
-<a href="/suppliers" class="back-link">&larr; Kembali ke daftar supplier</a>
-<h1>Tambah Supplier</h1>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Tambah Supplier</h1>
+        <p class="page-head-meta">Lengkapi data kontak supplier baru.</p>
+    </div>
+</div>
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-danger">
@@ -11,9 +15,9 @@
     </div>
 <?php endif; ?>
 
-<div class="card" style="max-width:420px;">
+<div class="card form-card">
     <form method="post" action="/suppliers">
-        <label for="name">Nama</label>
+        <label for="name">Nama<span class="required-mark">*</span></label>
         <input type="text" id="name" name="name" value="<?= htmlspecialchars($old['name'] ?? '', ENT_QUOTES) ?>" required>
 
         <label for="contact">Kontak</label>
@@ -22,6 +26,9 @@
         <label for="address">Alamat</label>
         <textarea id="address" name="address" rows="2"><?= htmlspecialchars($old['address'] ?? '', ENT_QUOTES) ?></textarea>
 
-        <button type="submit">Simpan</button>
+        <div class="form-actions">
+            <a href="/suppliers" class="btn btn-secondary">Batal</a>
+            <button type="submit">Simpan</button>
+        </div>
     </form>
 </div>

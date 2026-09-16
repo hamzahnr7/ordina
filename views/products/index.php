@@ -4,12 +4,15 @@ $queryWithout = static function (array $overrides) use ($filters): string {
     return '?' . http_build_query(array_filter([...$filters, ...$overrides]));
 };
 ?>
-<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
-
-<div class="toolbar">
-    <h1 style="margin:0;">Produk</h1>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Produk</h1>
+        <p class="page-head-meta"><?= (int) $result['total'] ?> produk cocok dengan filter saat ini</p>
+    </div>
     <?php if ($canManage): ?>
-        <a href="/products/create" class="btn">Tambah Produk</a>
+        <div class="page-head-actions">
+            <a href="/products/create" class="btn">Tambah Produk</a>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -19,9 +22,12 @@ $queryWithout = static function (array $overrides) use ($filters): string {
 
 <form method="get" action="/products" class="card filter-bar">
     <div class="filter-row">
-        <div class="filter-field">
+        <div class="filter-field search-field">
             <label for="search">Cari (nama/SKU)</label>
-            <input type="text" id="search" name="search" value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES) ?>">
+            <div class="search-input-wrap">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+                <input type="text" id="search" name="search" placeholder="Nama atau SKU produk" value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES) ?>">
+            </div>
         </div>
         <div class="filter-field">
             <label for="category_id">Kategori</label>
@@ -42,8 +48,11 @@ $queryWithout = static function (array $overrides) use ($filters): string {
                 <option value="normal" <?= ($filters['stock_status'] ?? '') === 'normal' ? 'selected' : '' ?>>Normal</option>
             </select>
         </div>
-        <div>
+        <div class="filter-actions">
             <button type="submit">Filter</button>
+            <?php if (array_filter($filters) !== []): ?>
+                <a href="/products" class="filter-reset">Reset filter</a>
+            <?php endif; ?>
         </div>
     </div>
 </form>
@@ -82,7 +91,7 @@ $queryWithout = static function (array $overrides) use ($filters): string {
                 <td data-label="Aksi">
                     <a href="/products/<?= (int) $item['id'] ?>/edit" class="btn btn-secondary">Edit</a>
                     <form method="post" action="/products/<?= (int) $item['id'] ?>/toggle-active" style="display:inline;">
-                        <button type="submit" class="btn-secondary"><?= ((int) $item['is_active']) ? 'Nonaktifkan' : 'Aktifkan' ?></button>
+                        <button type="submit" class="<?= ((int) $item['is_active']) ? 'btn-danger' : 'btn-secondary' ?>"><?= ((int) $item['is_active']) ? 'Nonaktifkan' : 'Aktifkan' ?></button>
                     </form>
                 </td>
             <?php endif; ?>

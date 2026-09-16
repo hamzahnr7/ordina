@@ -12,11 +12,14 @@ $statusBadge = static fn (string $status): string => match ($status) {
     default => 'badge-muted',
 };
 ?>
-<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
-
-<div class="toolbar">
-    <h1 style="margin:0;">Purchase Order</h1>
-    <a href="/purchase-orders/create" class="btn">Buat Purchase Order</a>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Purchase Order</h1>
+        <p class="page-head-meta"><?= (int) $result['total'] ?> PO cocok dengan filter saat ini</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="/purchase-orders/create" class="btn">Buat Purchase Order</a>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>
@@ -26,9 +29,12 @@ $statusBadge = static fn (string $status): string => match ($status) {
 <form method="get" action="/purchase-orders" class="card filter-bar">
     <input type="hidden" name="sort" value="<?= htmlspecialchars($sortDir, ENT_QUOTES) ?>">
     <div class="filter-row">
-        <div class="filter-field">
+        <div class="filter-field search-field">
             <label for="search">Cari (No. PO/Supplier)</label>
-            <input type="text" id="search" name="search" value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES) ?>">
+            <div class="search-input-wrap">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+                <input type="text" id="search" name="search" placeholder="Nomor PO atau nama supplier" value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES) ?>">
+            </div>
         </div>
         <div class="filter-field">
             <label for="status">Status</label>
@@ -41,8 +47,11 @@ $statusBadge = static fn (string $status): string => match ($status) {
                 <?php endforeach; ?>
             </select>
         </div>
-        <div>
+        <div class="filter-actions">
             <button type="submit">Filter</button>
+            <?php if (array_filter($filters) !== []): ?>
+                <a href="/purchase-orders" class="filter-reset">Reset filter</a>
+            <?php endif; ?>
         </div>
     </div>
 </form>

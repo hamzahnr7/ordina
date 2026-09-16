@@ -1,22 +1,30 @@
 <div class="auth-shell">
-    <div class="card auth-card">
-        <h1>Ordina</h1>
-        <p style="text-align:center;color:var(--color-text-muted);margin-top:calc(-1 * var(--space-2));">
-            Inventory &amp; Order Management System
-        </p>
+    <div class="auth-visual">
+        <div class="auth-visual-content">
+            <span class="app-brand">Ordina</span>
+            <h2>Setiap barang, tercatat.</h2>
+            <p>Stok multi-gudang, purchase order, dan sales order dalam satu sistem.</p>
+        </div>
+    </div>
 
-        <?php if (!empty($error)): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($error, ENT_QUOTES) ?></div>
-        <?php endif; ?>
+    <div class="auth-form-panel">
+        <div class="card auth-card">
+            <h1>Masuk ke Ordina</h1>
+            <p class="form-subtitle">Gunakan akun yang diberikan admin untuk mengakses sistem.</p>
 
-        <form method="post" action="/login">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" value="<?= htmlspecialchars($old['email'] ?? '', ENT_QUOTES) ?>" required autofocus>
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($error, ENT_QUOTES) ?></div>
+            <?php endif; ?>
 
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
+            <form method="post" action="/login">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="<?= htmlspecialchars($old['email'] ?? '', ENT_QUOTES) ?>" required autofocus>
 
-            <button type="submit" style="width:100%;justify-content:center;">Login</button>
-        </form>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit" style="width:100%;justify-content:center;">Login</button>
+            </form>
+        </div>
     </div>
 </div>

@@ -1,8 +1,11 @@
-<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
-
-<div class="toolbar">
-    <h1 style="margin:0;">Manajemen User</h1>
-    <a href="/users/create" class="btn">Tambah User</a>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Manajemen User</h1>
+        <p class="page-head-meta"><?= count($users) ?> akun Sales/Warehouse Staff</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="/users/create" class="btn">Tambah User</a>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>
@@ -38,7 +41,7 @@
             <td data-label="Aksi">
                 <a href="/users/<?= (int) $u->id ?>/edit" class="btn btn-secondary">Edit</a>
                 <form method="post" action="/users/<?= (int) $u->id ?>/toggle-active" style="display:inline;">
-                    <button type="submit" class="btn-secondary"><?= $u->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
+                    <button type="submit" class="<?= $u->isActive ? 'btn-danger' : 'btn-secondary' ?>"><?= $u->isActive ? 'Nonaktifkan' : 'Aktifkan' ?></button>
                 </form>
             </td>
         </tr>

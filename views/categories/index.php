@@ -1,8 +1,11 @@
-<a href="/dashboard" class="back-link">&larr; Kembali ke dashboard</a>
-
-<div class="toolbar">
-    <h1 style="margin:0;">Kategori Produk</h1>
-    <a href="/categories/create" class="btn">Tambah Kategori</a>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Kategori Produk</h1>
+        <p class="page-head-meta"><?= count($categories) ?> kategori terdaftar</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="/categories/create" class="btn">Tambah Kategori</a>
+    </div>
 </div>
 
 <?php if (!empty($success)): ?>

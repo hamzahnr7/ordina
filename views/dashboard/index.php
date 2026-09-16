@@ -8,14 +8,28 @@ use App\Domain\Role;
 use App\Domain\SalesOrderStatus;
 
 $rupiah = static fn (float $value): string => 'Rp' . number_format($value, 0, ',', '.');
-?>
-<h1>Halo, <?= htmlspecialchars($user['name'], ENT_QUOTES) ?></h1>
+$maxOf = static fn (array $counts): int => max([1, ...array_values($counts)]);
 
-<div class="card">
-    <p style="margin:0;">
-        Anda masuk sebagai <span class="badge badge-success"><?= htmlspecialchars($user['role'], ENT_QUOTES) ?></span>.
-        Gunakan menu di bagian atas halaman untuk berpindah antar fitur.
-    </p>
+/** Renders one status => count breakdown as proportional horizontal bars instead of a flat badge row. */
+$statusBars = static function (array $counts, callable $labelFor) use ($maxOf): void {
+    $max = $maxOf($counts);
+    echo '<div class="status-bar-list">';
+    foreach ($counts as $statusValue => $count) {
+        $pct = $count / $max * 100;
+        echo '<div class="status-bar-row">';
+        echo '<span class="status-bar-label">' . htmlspecialchars($labelFor($statusValue), ENT_QUOTES) . '</span>';
+        echo '<span class="status-bar-track"><span class="status-bar-fill" style="width:' . $pct . '%;"></span></span>';
+        echo '<span class="status-bar-count">' . $count . '</span>';
+        echo '</div>';
+    }
+    echo '</div>';
+};
+?>
+<div class="page-head">
+    <div class="page-head-text">
+        <h1>Halo, <?= htmlspecialchars($user['name'], ENT_QUOTES) ?></h1>
+        <p class="page-head-meta">Masuk sebagai <span class="badge badge-success"><?= htmlspecialchars($user['role'], ENT_QUOTES) ?></span></p>
+    </div>
 </div>
 
 <?php if ($role === Role::Admin): ?>
@@ -30,54 +44,47 @@ $rupiah = static fn (float $value): string => 'Rp' . number_format($value, 0, ',
         </div>
     </div>
 
-    <h2>Purchase Order per Status</h2>
-    <div class="card">
-        <div class="status-counts">
-            <?php foreach ($stats['purchaseOrderStatusCounts'] as $statusValue => $count): ?>
-                <span class="badge badge-muted"><?= htmlspecialchars(PurchaseOrderStatus::from($statusValue)->label(), ENT_QUOTES) ?>: <?= $count ?></span>
-            <?php endforeach; ?>
+    <div class="dashboard-grid">
+        <div>
+            <div class="panel">
+                <p class="panel-title">Purchase Order per Status</p>
+                <?php $statusBars($stats['purchaseOrderStatusCounts'], static fn (string $v): string => PurchaseOrderStatus::from($v)->label()); ?>
+            </div>
+            <div class="panel">
+                <p class="panel-title">Sales Order per Status</p>
+                <?php $statusBars($stats['salesOrderStatusCounts'], static fn (string $v): string => SalesOrderStatus::from($v)->label()); ?>
+            </div>
+        </div>
+
+        <div class="panel <?= $stats['lowStockProducts'] !== [] ? 'panel-attention' : '' ?>">
+            <p class="panel-title">Produk Perlu Restock</p>
+            <?php if ($stats['lowStockProducts'] === []): ?>
+                <p class="field-hint" style="margin:0;">Tidak ada produk di bawah reorder point saat ini.</p>
+            <?php else: ?>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th>SKU</th><th>Produk</th><th>Stok</th><th>ROP</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($stats['lowStockProducts'] as $product): ?>
+                            <tr>
+                                <td data-label="SKU"><?= htmlspecialchars($product['sku'], ENT_QUOTES) ?></td>
+                                <td data-label="Produk"><?= htmlspecialchars($product['name'], ENT_QUOTES) ?></td>
+                                <td data-label="Stok"><?= (int) $product['total_stock'] ?></td>
+                                <td data-label="ROP"><?= (int) $product['reorder_point'] ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
-
-    <h2>Sales Order per Status</h2>
-    <div class="card">
-        <div class="status-counts">
-            <?php foreach ($stats['salesOrderStatusCounts'] as $statusValue => $count): ?>
-                <span class="badge badge-muted"><?= htmlspecialchars(SalesOrderStatus::from($statusValue)->label(), ENT_QUOTES) ?>: <?= $count ?></span>
-            <?php endforeach; ?>
-        </div>
-    </div>
-
-    <?php if ($stats['lowStockProducts'] !== []): ?>
-        <h2>Produk Perlu Restock</h2>
-        <div class="card">
-        <div class="table-scroll">
-            <table>
-                <thead><tr><th>SKU</th><th>Produk</th><th>Stok</th><th>Reorder Point</th></tr></thead>
-                <tbody>
-                <?php foreach ($stats['lowStockProducts'] as $product): ?>
-                    <tr>
-                        <td data-label="SKU"><?= htmlspecialchars($product['sku'], ENT_QUOTES) ?></td>
-                        <td data-label="Produk"><?= htmlspecialchars($product['name'], ENT_QUOTES) ?></td>
-                        <td data-label="Stok"><?= (int) $product['total_stock'] ?></td>
-                        <td data-label="Reorder Point"><?= (int) $product['reorder_point'] ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        </div>
-    <?php endif; ?>
 <?php endif; ?>
 
 <?php if ($role === Role::Sales): ?>
-    <h2>Ringkasan Sales Order Saya</h2>
-    <div class="card">
-        <div class="status-counts">
-            <?php foreach ($stats['salesOrderStatusCounts'] as $statusValue => $count): ?>
-                <span class="badge badge-muted"><?= htmlspecialchars(SalesOrderStatus::from($statusValue)->label(), ENT_QUOTES) ?>: <?= $count ?></span>
-            <?php endforeach; ?>
-        </div>
+    <div class="panel">
+        <p class="panel-title">Ringkasan Sales Order Saya</p>
+        <?php $statusBars($stats['salesOrderStatusCounts'], static fn (string $v): string => SalesOrderStatus::from($v)->label()); ?>
     </div>
 <?php endif; ?>
 
@@ -98,23 +105,23 @@ $rupiah = static fn (float $value): string => 'Rp' . number_format($value, 0, ',
     </div>
 
     <?php if ($stats['lowStockProducts'] !== []): ?>
-        <h2>Produk Low Stock</h2>
-        <div class="card">
-        <div class="table-scroll">
-            <table>
-                <thead><tr><th>SKU</th><th>Produk</th><th>Stok</th><th>Reorder Point</th></tr></thead>
-                <tbody>
-                <?php foreach ($stats['lowStockProducts'] as $product): ?>
-                    <tr>
-                        <td data-label="SKU"><?= htmlspecialchars($product['sku'], ENT_QUOTES) ?></td>
-                        <td data-label="Produk"><?= htmlspecialchars($product['name'], ENT_QUOTES) ?></td>
-                        <td data-label="Stok"><?= (int) $product['total_stock'] ?></td>
-                        <td data-label="Reorder Point"><?= (int) $product['reorder_point'] ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+        <div class="panel panel-attention">
+            <p class="panel-title">Produk Low Stock</p>
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th>SKU</th><th>Produk</th><th>Stok</th><th>ROP</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($stats['lowStockProducts'] as $product): ?>
+                        <tr>
+                            <td data-label="SKU"><?= htmlspecialchars($product['sku'], ENT_QUOTES) ?></td>
+                            <td data-label="Produk"><?= htmlspecialchars($product['name'], ENT_QUOTES) ?></td>
+                            <td data-label="Stok"><?= (int) $product['total_stock'] ?></td>
+                            <td data-label="ROP"><?= (int) $product['reorder_point'] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     <?php endif; ?>
 <?php endif; ?>

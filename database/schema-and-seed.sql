@@ -206,11 +206,11 @@ INSERT INTO warehouses (name, location, is_active) VALUES
 --   docker compose exec web php scripts/hash-password.php "YourPassword123"
 -- and replace the values before relying on these accounts.
 INSERT INTO users (name, email, password_hash, role, is_active) VALUES
-    ('Admin Utama', 'admin@ordina.test', '$2y$10$tgokP.e/vj6yblLgybc9H.kyLbBCx8CB.5.54z7D.Aaz1.62P3woG', 'Admin', 1),
-    ('Sales Satu', 'sales1@ordina.test', '$2y$10$tgokP.e/vj6yblLgybc9H.kyLbBCx8CB.5.54z7D.Aaz1.62P3woG', 'Sales', 1),
-    ('Sales Dua', 'sales2@ordina.test', '$2y$10$tgokP.e/vj6yblLgybc9H.kyLbBCx8CB.5.54z7D.Aaz1.62P3woG', 'Sales', 1),
-    ('Gudang Satu', 'wh1@ordina.test', '$2y$10$tgokP.e/vj6yblLgybc9H.kyLbBCx8CB.5.54z7D.Aaz1.62P3woG', 'WarehouseStaff', 1),
-    ('Gudang Dua', 'wh2@ordina.test', '$2y$10$tgokP.e/vj6yblLgybc9H.kyLbBCx8CB.5.54z7D.Aaz1.62P3woG', 'WarehouseStaff', 1);
+    ('Admin Utama', 'admin@ordina.test', '$2y$10$nmGUHX3c7FAprybZDpmGFOJn98K0F4Ii118qz41xcA9fkfv9vxrI2', 'Admin', 1),
+    ('Sales Satu', 'sales1@ordina.test', '$2y$10$nmGUHX3c7FAprybZDpmGFOJn98K0F4Ii118qz41xcA9fkfv9vxrI2', 'Sales', 1),
+    ('Sales Dua', 'sales2@ordina.test', '$2y$10$nmGUHX3c7FAprybZDpmGFOJn98K0F4Ii118qz41xcA9fkfv9vxrI2', 'Sales', 1),
+    ('Gudang Satu', 'wh1@ordina.test', '$2y$10$nmGUHX3c7FAprybZDpmGFOJn98K0F4Ii118qz41xcA9fkfv9vxrI2', 'WarehouseStaff', 1),
+    ('Gudang Dua', 'wh2@ordina.test', '$2y$10$nmGUHX3c7FAprybZDpmGFOJn98K0F4Ii118qz41xcA9fkfv9vxrI2', 'WarehouseStaff', 1);
 
 INSERT INTO suppliers (name, contact, address, is_active) VALUES
     ('Supplier Elektronik Nusantara', 'purchasing@elektroniknusantara.test', 'Jakarta', 1),
