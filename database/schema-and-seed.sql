@@ -5,7 +5,7 @@
 --
 -- NOTE (template stage): the seed below only has a handful of rows per table
 -- so the schema can be sanity-checked early. Before final submission this
--- must be expanded to the §7.1 minimums: >=30 products (varied reorder
+-- must be expanded to the 7.1 minimums: >=30 products (varied reorder
 -- points, some below it), >=2 warehouses, >=25 PO+SO combined with varied
 -- statuses (including PendingApproval and Cancelled examples), >=2 Sales and
 -- >=2 Warehouse Staff accounts.
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS sales_order_items (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------
--- stock_ledger - append-only movement log (§1.3, ARCH-02)
+-- stock_ledger - append-only movement log (1.3, ARCH-02)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS stock_ledger (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -256,4 +256,4 @@ INSERT INTO sales_order_items (sales_order_id, product_id, qty, sell_price) VALU
 
 -- TODO: expand PO and SO seed data to >=25 orders combined with varied
 -- statuses (including Cancelled/Fulfilled examples) before final submission,
--- per §7.1.
+-- per 7.1.

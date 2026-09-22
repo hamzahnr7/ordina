@@ -26,7 +26,7 @@ use App\Service\Exception\ValidationException;
  */
 final class PurchaseOrderService
 {
-    private const PER_PAGE = 10;
+    private const DEFAULT_PER_PAGE = 10;
 
     public function __construct(
         private readonly PurchaseOrderRepositoryInterface $purchaseOrders,
@@ -44,17 +44,17 @@ final class PurchaseOrderService
      * @param array{search?:string, status?:string} $filters
      * @return array{items: list<array<string, mixed>>, total: int, page: int, perPage: int, totalPages: int, sortDir: string}
      */
-    public function paginate(array $filters, string $sortDir, int $page): array
+    public function paginate(array $filters, string $sortDir, int $page, int $perPage = self::DEFAULT_PER_PAGE): array
     {
         $page = max(1, $page);
-        $result = $this->purchaseOrders->paginateForListing($filters, $sortDir, $page, self::PER_PAGE);
-        $totalPages = max(1, (int) ceil($result['total'] / self::PER_PAGE));
+        $result = $this->purchaseOrders->paginateForListing($filters, $sortDir, $page, $perPage);
+        $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
         return [
             'items' => $result['items'],
             'total' => $result['total'],
             'page' => $page,
-            'perPage' => self::PER_PAGE,
+            'perPage' => $perPage,
             'totalPages' => $totalPages,
             'sortDir' => strtoupper($sortDir) === 'ASC' ? 'asc' : 'desc',
         ];

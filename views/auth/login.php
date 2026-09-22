@@ -2,6 +2,7 @@
     <div class="auth-visual">
         <div class="auth-visual-content">
             <span class="app-brand">Ordina</span>
+            <p class="auth-visual-subtitle">Order Management &amp; Inventory System</p>
             <h2>Setiap barang, tercatat.</h2>
             <p>Stok multi-gudang, purchase order, dan sales order dalam satu sistem.</p>
         </div>

@@ -29,7 +29,7 @@ use App\Service\Exception\ValidationException;
  */
 final class SalesOrderService
 {
-    private const PER_PAGE = 10;
+    private const DEFAULT_PER_PAGE = 10;
 
     public function __construct(
         private readonly SalesOrderRepositoryInterface $salesOrders,
@@ -47,17 +47,17 @@ final class SalesOrderService
      * @param array{search?:string, status?:string} $filters
      * @return array{items: list<array<string, mixed>>, total: int, page: int, perPage: int, totalPages: int, sortDir: string}
      */
-    public function paginate(array $filters, ?int $ownerId, string $sortDir, int $page): array
+    public function paginate(array $filters, ?int $ownerId, string $sortDir, int $page, int $perPage = self::DEFAULT_PER_PAGE): array
     {
         $page = max(1, $page);
-        $result = $this->salesOrders->paginateForListing($filters, $ownerId, $sortDir, $page, self::PER_PAGE);
-        $totalPages = max(1, (int) ceil($result['total'] / self::PER_PAGE));
+        $result = $this->salesOrders->paginateForListing($filters, $ownerId, $sortDir, $page, $perPage);
+        $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
         return [
             'items' => $result['items'],
             'total' => $result['total'],
             'page' => $page,
-            'perPage' => self::PER_PAGE,
+            'perPage' => $perPage,
             'totalPages' => $totalPages,
             'sortDir' => strtoupper($sortDir) === 'ASC' ? 'asc' : 'desc',
         ];
@@ -239,8 +239,9 @@ final class SalesOrderService
         foreach ($itemsInput as $index => $item) {
             $line = $index + 1;
             $productId = (int) ($item['product_id'] ?? 0);
+            $product = $productId > 0 ? $this->products->findById($productId) : null;
 
-            if ($productId <= 0 || $this->products->findById($productId) === null) {
+            if ($product === null) {
                 $errors["item_{$index}_product"] = "Produk tidak valid pada baris {$line}.";
             }
 
@@ -250,6 +251,11 @@ final class SalesOrderService
 
             if (!is_numeric($item['sell_price'] ?? null) || (float) $item['sell_price'] < 0) {
                 $errors["item_{$index}_price"] = "Harga jual pada baris {$line} tidak valid.";
+            } elseif ($product !== null && (float) $item['sell_price'] < $product->sellPrice) {
+                // Sell price may only be raised from the product's own registered
+                // price, never lowered - price cuts aren't something a Sales
+                // Order is allowed to grant on its own.
+                $errors["item_{$index}_price"] = "Harga jual pada baris {$line} tidak boleh lebih rendah dari harga jual produk (Rp" . number_format($product->sellPrice, 0, ',', '.') . ").";
             }
         }
 

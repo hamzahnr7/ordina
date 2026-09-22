@@ -34,6 +34,7 @@
 | PO cancellation (PO-01) | Cannot cancel once fully Received | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
 | SO validation (SO-01) | Create rejects an empty item list | `tests/Unit/SalesOrderServiceTest.php` | Passing |
 | SO validation (SO-01) | Create rejects an unknown customer_id | `tests/Unit/SalesOrderServiceTest.php` | Passing |
+| SO validation (SO-01) | Sell price below the product's own registered price is rejected; at/above it is accepted (price may only be raised, never cut) | `tests/Unit/SalesOrderServiceTest.php` | Passing |
 | SO status transition (SO-01) | submit(): Draft -> PendingApproval; rejects a second submit | `tests/Unit/SalesOrderServiceTest.php` | Passing |
 | SO status transition (SO-01) | reject(): PendingApproval -> Cancelled | `tests/Unit/SalesOrderServiceTest.php` | Passing |
 | SO status transition (SO-01) | cancel() rejected once Fulfilled | `tests/Unit/SalesOrderServiceTest.php` | Passing |

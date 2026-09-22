@@ -1,8 +1,10 @@
 <?php
 /** @var array{items: list<array<string,mixed>>, total:int, page:int, perPage:int, totalPages:int, sortDir:string} $result */
-$queryWithout = static function (array $overrides) use ($filters, $sortDir): string {
-    return '?' . http_build_query(array_filter(['sort' => $sortDir, ...$filters, ...$overrides]));
+$queryWithout = static function (array $overrides) use ($filters, $sortDir, $perPage): string {
+    return '?' . http_build_query(array_filter(['sort' => $sortDir, 'per_page' => $perPage, ...$filters, ...$overrides]));
 };
+$rangeStart = $result['total'] === 0 ? 0 : (($result['page'] - 1) * $result['perPage'] + 1);
+$rangeEnd = min($result['total'], $result['page'] * $result['perPage']);
 $statusBadge = static fn (string $status): string => match ($status) {
     'Draft' => 'badge-muted',
     'Cancelled' => 'badge-danger',
@@ -44,6 +46,14 @@ $statusBadge = static fn (string $status): string => match ($status) {
                         <?= htmlspecialchars($status->label(), ENT_QUOTES) ?>
                     </option>
                 <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="filter-field per-page-field">
+            <label for="per_page">Tampilkan</label>
+            <select id="per_page" name="per_page">
+                <option value="10" <?= $perPage === 10 ? 'selected' : '' ?>>10</option>
+                <option value="25" <?= $perPage === 25 ? 'selected' : '' ?>>25</option>
+                <option value="50" <?= $perPage === 50 ? 'selected' : '' ?>>50</option>
             </select>
         </div>
         <div class="filter-actions">
@@ -91,7 +101,8 @@ $statusBadge = static fn (string $status): string => match ($status) {
 </div>
 </div>
 
-<?php if ($result['totalPages'] > 1): ?>
+<div class="pagination-bar">
+    <p class="pagination-info">Menampilkan <?= $rangeStart ?>-<?= $rangeEnd ?> dari <?= $result['total'] ?> data</p>
     <nav class="pagination" aria-label="Pagination">
         <?php for ($p = 1; $p <= $result['totalPages']; $p++): ?>
             <?php if ($p === $result['page']): ?>
@@ -101,4 +112,4 @@ $statusBadge = static fn (string $status): string => match ($status) {
             <?php endif; ?>
         <?php endfor; ?>
     </nav>
-<?php endif; ?>
+</div>

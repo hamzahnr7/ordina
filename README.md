@@ -1,4 +1,4 @@
-# Ordina - Inventory & Order Management System
+# Ordina - Order Management & Inventory System
 
 Final project for Neuronworks' Intermediate Programmer program. Web app for
 multi-warehouse inventory, purchase orders, and sales orders across three

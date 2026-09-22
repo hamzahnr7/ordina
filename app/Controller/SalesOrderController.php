@@ -51,14 +51,17 @@ final class SalesOrderController extends Controller
         ]);
         $sortDir = ($_GET['sort'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
         $page = max(1, (int) ($_GET['page'] ?? 1));
+        $requestedPerPage = (int) ($_GET['per_page'] ?? 10);
+        $perPage = in_array($requestedPerPage, [10, 25, 50], true) ? $requestedPerPage : 10;
         $role = $this->currentRole();
         $ownerId = $role === Role::Sales ? (int) $this->currentUser()['id'] : null;
 
         $this->view('sales-orders/index', [
             'title' => 'Sales Order',
-            'result' => $this->service()->paginate($filters, $ownerId, $sortDir, $page),
+            'result' => $this->service()->paginate($filters, $ownerId, $sortDir, $page, $perPage),
             'filters' => $filters,
             'sortDir' => $sortDir,
+            'perPage' => $perPage,
             'statuses' => SalesOrderStatus::cases(),
             'success' => Session::pullFlash('success'),
             'canCreate' => $role !== null && Gate::allows($role, Permission::CreateSalesOrder),

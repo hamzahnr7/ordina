@@ -18,8 +18,12 @@ $statusBadge = match ($salesOrder->status->value) {
 ?>
 <div class="page-head">
     <div class="page-head-text">
-        <a href="/sales-orders" class="page-back">&larr; Kembali ke daftar Sales Order</a>
-        <h1>SO-<?= str_pad((string) $salesOrder->id, 5, '0', STR_PAD_LEFT) ?> <span class="badge <?= $statusBadge ?>"><?= htmlspecialchars($salesOrder->status->label(), ENT_QUOTES) ?></span></h1>
+        <div class="page-title-row">
+            <a href="/sales-orders" class="icon-btn back-btn" aria-label="Kembali ke daftar Sales Order">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>
+            </a>
+            <h1>SO-<?= str_pad((string) $salesOrder->id, 5, '0', STR_PAD_LEFT) ?> <span class="badge <?= $statusBadge ?>"><?= htmlspecialchars($salesOrder->status->label(), ENT_QUOTES) ?></span></h1>
+        </div>
     </div>
 </div>
 

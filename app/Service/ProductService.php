@@ -13,7 +13,7 @@ use App\Service\Exception\ValidationException;
 /** PRD-01 (catalog CRUD) + FIND-01 (search/filter/pagination) + WH-01 (per-warehouse stock on the detail page). */
 final class ProductService
 {
-    private const PER_PAGE = 10;
+    private const DEFAULT_PER_PAGE = 10;
 
     public function __construct(
         private readonly ProductRepositoryInterface $products,
@@ -31,17 +31,17 @@ final class ProductService
      * @param array{search?:string, category_id?:int, stock_status?:string} $filters
      * @return array{items: list<array<string, mixed>>, total: int, page: int, perPage: int, totalPages: int}
      */
-    public function paginate(array $filters, int $page): array
+    public function paginate(array $filters, int $page, int $perPage = self::DEFAULT_PER_PAGE): array
     {
         $page = max(1, $page);
-        $result = $this->products->paginateForListing($filters, $page, self::PER_PAGE);
-        $totalPages = max(1, (int) ceil($result['total'] / self::PER_PAGE));
+        $result = $this->products->paginateForListing($filters, $page, $perPage);
+        $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
         return [
             'items' => $result['items'],
             'total' => $result['total'],
             'page' => $page,
-            'perPage' => self::PER_PAGE,
+            'perPage' => $perPage,
             'totalPages' => $totalPages,
         ];
     }

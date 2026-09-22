@@ -16,6 +16,14 @@ async function fetchJson(url, options = {}) {
 
 // Example usage (API-01): fetchJson(`/api/products/${sku}/availability`)
 
+// Auto-submit a list page's filter form the moment "Tampilkan" (rows per
+// page) changes, instead of making the user also click Filter (FIND-01).
+(function () {
+    document.getElementById('per_page')?.addEventListener('change', (event) => {
+        event.target.form?.submit();
+    });
+})();
+
 // Mobile sidebar drawer (UI-01: navigation must stay usable at 360px).
 (function () {
     const shell = document.querySelector('.app-shell');
@@ -133,6 +141,13 @@ async function fetchJson(url, options = {}) {
 
         if (priceHidden) {
             priceHidden.value = price;
+        }
+
+        // SO's Harga Jual may only be raised from the product's own price,
+        // never lowered - the server re-checks this regardless (never trust
+        // the browser alone), but the min attribute gives instant feedback.
+        if (option.dataset.sellPrice !== undefined) {
+            priceInput.min = price;
         }
 
         priceInput.dispatchEvent(new Event('input', { bubbles: true }));

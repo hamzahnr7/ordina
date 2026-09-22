@@ -46,7 +46,7 @@ $navIcon = static function (string $key): string {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars($title ?? 'Ordina Inventory & Order Management', ENT_QUOTES) ?></title>
+    <title><?= htmlspecialchars($title ?? 'Ordina - Order Management & Inventory System', ENT_QUOTES) ?></title>
     <link rel="stylesheet" href="/<?= htmlspecialchars($assetVersion('assets/css/app.css'), ENT_QUOTES) ?>">
 </head>
 <body>

@@ -9,8 +9,12 @@
 ?>
 <div class="page-head">
     <div class="page-head-text">
-        <a href="/products" class="page-back">&larr; Kembali ke daftar produk</a>
-        <h1><?= htmlspecialchars($product->name, ENT_QUOTES) ?> <span class="badge <?= $product->isActive ? 'badge-success' : 'badge-muted' ?>"><?= $product->isActive ? 'Aktif' : 'Nonaktif' ?></span></h1>
+        <div class="page-title-row">
+            <a href="/products" class="icon-btn back-btn" aria-label="Kembali ke daftar produk">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>
+            </a>
+            <h1><?= htmlspecialchars($product->name, ENT_QUOTES) ?> <span class="badge <?= $product->isActive ? 'badge-success' : 'badge-muted' ?>"><?= $product->isActive ? 'Aktif' : 'Nonaktif' ?></span></h1>
+        </div>
     </div>
 </div>
 

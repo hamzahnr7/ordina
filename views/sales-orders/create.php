@@ -77,6 +77,7 @@
         <p><button type="button" class="btn-secondary" id="add-item-row">+ Tambah Item</button></p>
 
         <p class="field-hint">Stok tersedia di atas hanya referensi. Pengecekan sebenarnya baru dilakukan saat goods issue (setelah disetujui Admin), bukan saat Sales Order ini dibuat.</p>
+        <p class="field-hint">Harga jual hanya boleh dinaikkan dari harga produk, tidak boleh diturunkan.</p>
 
         <div class="form-actions">
             <a href="/sales-orders" class="btn btn-secondary">Batal</a>

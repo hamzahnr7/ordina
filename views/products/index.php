@@ -1,8 +1,10 @@
 <?php
 /** @var array{items: list<array<string,mixed>>, total:int, page:int, perPage:int, totalPages:int} $result */
-$queryWithout = static function (array $overrides) use ($filters): string {
-    return '?' . http_build_query(array_filter([...$filters, ...$overrides]));
+$queryWithout = static function (array $overrides) use ($filters, $perPage): string {
+    return '?' . http_build_query(array_filter([...$filters, 'per_page' => $perPage, ...$overrides]));
 };
+$rangeStart = $result['total'] === 0 ? 0 : (($result['page'] - 1) * $result['perPage'] + 1);
+$rangeEnd = min($result['total'], $result['page'] * $result['perPage']);
 ?>
 <div class="page-head">
     <div class="page-head-text">
@@ -46,6 +48,14 @@ $queryWithout = static function (array $overrides) use ($filters): string {
                 <option value="">Semua</option>
                 <option value="low" <?= ($filters['stock_status'] ?? '') === 'low' ? 'selected' : '' ?>>Low stock</option>
                 <option value="normal" <?= ($filters['stock_status'] ?? '') === 'normal' ? 'selected' : '' ?>>Normal</option>
+            </select>
+        </div>
+        <div class="filter-field per-page-field">
+            <label for="per_page">Tampilkan</label>
+            <select id="per_page" name="per_page">
+                <option value="10" <?= $perPage === 10 ? 'selected' : '' ?>>10</option>
+                <option value="25" <?= $perPage === 25 ? 'selected' : '' ?>>25</option>
+                <option value="50" <?= $perPage === 50 ? 'selected' : '' ?>>50</option>
             </select>
         </div>
         <div class="filter-actions">
@@ -102,7 +112,8 @@ $queryWithout = static function (array $overrides) use ($filters): string {
 </div>
 </div>
 
-<?php if ($result['totalPages'] > 1): ?>
+<div class="pagination-bar">
+    <p class="pagination-info">Menampilkan <?= $rangeStart ?>-<?= $rangeEnd ?> dari <?= $result['total'] ?> data</p>
     <nav class="pagination" aria-label="Pagination">
         <?php for ($p = 1; $p <= $result['totalPages']; $p++): ?>
             <?php if ($p === $result['page']): ?>
@@ -112,4 +123,4 @@ $queryWithout = static function (array $overrides) use ($filters): string {
             <?php endif; ?>
         <?php endfor; ?>
     </nav>
-<?php endif; ?>
+</div>

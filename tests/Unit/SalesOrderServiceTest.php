@@ -117,6 +117,29 @@ final class SalesOrderServiceTest extends TestCase
         );
     }
 
+    /** Sell price may only be raised from the product's own price, never lowered. */
+    public function test_create_rejects_sell_price_below_product_price(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->service->create(
+            ['customer_id' => $this->customerId, 'warehouse_id' => $this->warehouseId],
+            [['product_id' => $this->productId, 'qty' => 1, 'sell_price' => 1999]], // product's own price is 2000
+            self::CREATOR_ID,
+        );
+    }
+
+    public function test_create_accepts_sell_price_at_or_above_product_price(): void
+    {
+        $so = $this->service->create(
+            ['customer_id' => $this->customerId, 'warehouse_id' => $this->warehouseId],
+            [['product_id' => $this->productId, 'qty' => 1, 'sell_price' => 2500]], // raised above 2000
+            self::CREATOR_ID,
+        );
+
+        self::assertNotNull($so->id);
+    }
+
     public function test_submit_moves_draft_to_pending_approval(): void
     {
         $soId = $this->createDraftSo();
