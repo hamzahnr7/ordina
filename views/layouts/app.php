@@ -108,6 +108,14 @@ $navIcon = static function (string $key): string {
         </div>
     <?php endif; ?>
 
+    <dialog id="confirm-dialog" class="confirm-dialog">
+        <p class="confirm-dialog-message"></p>
+        <div class="confirm-dialog-actions">
+            <button type="button" class="btn-secondary" data-confirm-cancel>Batal</button>
+            <button type="button" data-confirm-ok>Lanjutkan</button>
+        </div>
+    </dialog>
+
     <script src="/<?= htmlspecialchars($assetVersion('assets/js/app.js'), ENT_QUOTES) ?>"></script>
 </body>
 </html>

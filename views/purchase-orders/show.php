@@ -85,7 +85,7 @@ $statusBadge = match ($purchaseOrder->status->value) {
                     </table>
                     </div>
                     <p class="field-hint">Isi qty yang benar-benar diterima secara fisik. Penerimaan sebagian (partial) diperbolehkan - sisa akan tetap tercatat untuk diterima lain waktu.</p>
-                    <button type="submit">Proses Goods Receipt</button>
+                    <button type="submit" data-confirm="Proses goods receipt untuk qty yang sudah diisi? Stok gudang akan langsung bertambah.">Proses Goods Receipt</button>
                 </form>
             </div>
         <?php endif; ?>
@@ -129,10 +129,10 @@ $statusBadge = match ($purchaseOrder->status->value) {
                 <p class="panel-title">Aksi</p>
                 <div class="detail-actions">
                     <form method="post" action="/purchase-orders/<?= (int) $purchaseOrder->id ?>/mark-ordered">
-                        <button type="submit">Kirim ke Supplier</button>
+                        <button type="submit" data-confirm="Kirim Purchase Order ini ke supplier? Status akan berubah menjadi Ordered.">Kirim ke Supplier</button>
                     </form>
                     <form method="post" action="/purchase-orders/<?= (int) $purchaseOrder->id ?>/cancel">
-                        <button type="submit" class="btn-danger">Batalkan</button>
+                        <button type="submit" class="btn-danger" data-confirm="Batalkan Purchase Order ini? Tindakan ini tidak bisa dibatalkan.">Batalkan</button>
                     </form>
                 </div>
             </div>
@@ -141,7 +141,7 @@ $statusBadge = match ($purchaseOrder->status->value) {
                 <p class="panel-title">Aksi</p>
                 <div class="detail-actions">
                     <form method="post" action="/purchase-orders/<?= (int) $purchaseOrder->id ?>/cancel">
-                        <button type="submit" class="btn-danger">Batalkan Purchase Order</button>
+                        <button type="submit" class="btn-danger" data-confirm="Batalkan Purchase Order ini? Tindakan ini tidak bisa dibatalkan.">Batalkan Purchase Order</button>
                     </form>
                 </div>
             </div>

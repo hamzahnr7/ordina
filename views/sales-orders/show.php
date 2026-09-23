@@ -76,7 +76,7 @@ $statusBadge = match ($salesOrder->status->value) {
                     perubahan stok sebagian.
                 </p>
                 <form method="post" action="/sales-orders/<?= (int) $salesOrder->id ?>/issue">
-                    <button type="submit">Proses Goods Issue</button>
+                    <button type="submit" data-confirm="Proses goods issue untuk Sales Order ini? Stok gudang akan langsung dikurangi.">Proses Goods Issue</button>
                 </form>
             </div>
         <?php endif; ?>
@@ -120,20 +120,20 @@ $statusBadge = match ($salesOrder->status->value) {
                 <div class="detail-actions">
                     <?php if ($canSubmit): ?>
                         <form method="post" action="/sales-orders/<?= (int) $salesOrder->id ?>/submit">
-                            <button type="submit">Ajukan untuk Approval</button>
+                            <button type="submit" data-confirm="Ajukan Sales Order ini untuk approval?">Ajukan untuk Approval</button>
                         </form>
                     <?php endif; ?>
                     <?php if ($canApproveOrReject): ?>
                         <form method="post" action="/sales-orders/<?= (int) $salesOrder->id ?>/approve">
-                            <button type="submit">Setujui</button>
+                            <button type="submit" data-confirm="Setujui Sales Order ini?">Setujui</button>
                         </form>
                         <form method="post" action="/sales-orders/<?= (int) $salesOrder->id ?>/reject">
-                            <button type="submit" class="btn-danger">Tolak</button>
+                            <button type="submit" class="btn-danger" data-confirm="Tolak Sales Order ini? Tindakan ini tidak bisa dibatalkan.">Tolak</button>
                         </form>
                     <?php endif; ?>
                     <?php if ($canCancel): ?>
                         <form method="post" action="/sales-orders/<?= (int) $salesOrder->id ?>/cancel">
-                            <button type="submit" class="btn-danger">Batalkan</button>
+                            <button type="submit" class="btn-danger" data-confirm="Batalkan Sales Order ini? Tindakan ini tidak bisa dibatalkan.">Batalkan</button>
                         </form>
                     <?php endif; ?>
                 </div>

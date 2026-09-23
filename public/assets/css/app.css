@@ -1100,6 +1100,48 @@ dd {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Confirm dialog (native <dialog> - see layouts/app.php + app.js) - an     */
+/* on-brand replacement for the browser's own confirm() popup.             */
+/* ---------------------------------------------------------------------- */
+
+.confirm-dialog {
+    box-sizing: border-box;
+    width: min(400px, calc(100vw - 2 * var(--space-4)));
+    margin: auto;
+    padding: var(--space-4);
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: 0 16px 48px rgba(15, 18, 28, 0.28);
+}
+
+.confirm-dialog::backdrop {
+    background: rgba(15, 18, 28, 0.5);
+}
+
+.confirm-dialog-message {
+    margin: 0 0 var(--space-4);
+    color: var(--color-text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+@media (max-width: 480px) {
+    .confirm-dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .confirm-dialog-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* Error pages                                                            */
 /* ---------------------------------------------------------------------- */
 

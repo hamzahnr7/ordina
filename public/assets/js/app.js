@@ -56,26 +56,95 @@ async function fetchJson(url, options = {}) {
     });
 })();
 
-// Confirm before deactivating a record (soft-delete only, never a hard
-// delete - see README "Known limitations") - a lightweight safety net so a
-// stray click doesn't take a user/product/partner offline by accident.
+// Mark every deactivate ("Nonaktifkan") button for the shared confirm-dialog
+// handler below - soft-delete only, never a hard delete (see README "Known
+// limitations") - a lightweight safety net so a stray click doesn't take a
+// user/product/partner offline by accident.
 (function () {
     document.querySelectorAll('form[action*="/toggle-active"]').forEach((form) => {
         const button = form.querySelector('button[type="submit"]');
 
-        if (!button || !button.textContent.trim().startsWith('Nonaktifkan')) {
-            return;
+        if (button?.textContent.trim().startsWith('Nonaktifkan')) {
+            button.dataset.confirm = 'Nonaktifkan data ini? Data tidak dihapus permanen dan bisa diaktifkan kembali kapan saja.';
         }
+    });
+})();
 
-        form.addEventListener('submit', (event) => {
-            const confirmed = window.confirm(
-                'Nonaktifkan data ini? Data tidak dihapus permanen dan bisa diaktifkan kembali kapan saja.'
-            );
+// Confirm before submitting any button/form marked with data-confirm - used
+// on PO/SO detail-page actions (status changes, goods receipt/issue) so a
+// stray click doesn't fire a consequential action unintentionally. Uses the
+// native <dialog> element (see layouts/app.php) for an on-brand modal
+// instead of the browser's own confirm() popup, falling back to that same
+// confirm() where <dialog> isn't supported so the safety net never disappears.
+(function () {
+    const dialog = document.getElementById('confirm-dialog');
 
-            if (!confirmed) {
+    if (!dialog || typeof dialog.showModal !== 'function') {
+        document.addEventListener('submit', (event) => {
+            const message = event.submitter?.dataset.confirm ?? event.target.dataset.confirm;
+
+            if (message && !window.confirm(message)) {
                 event.preventDefault();
             }
         });
+
+        return;
+    }
+
+    const messageEl = dialog.querySelector('.confirm-dialog-message');
+    const okButton = dialog.querySelector('[data-confirm-ok]');
+    const cancelButton = dialog.querySelector('[data-confirm-cancel]');
+    const alreadyConfirmed = new WeakSet();
+    let pending = null;
+
+    document.addEventListener('submit', (event) => {
+        const form = event.target;
+
+        if (alreadyConfirmed.has(form)) {
+            alreadyConfirmed.delete(form);
+            return;
+        }
+
+        const submitter = event.submitter;
+        const message = submitter?.dataset.confirm ?? form.dataset.confirm;
+
+        if (!message) {
+            return;
+        }
+
+        event.preventDefault();
+        pending = { form, submitter };
+        messageEl.textContent = message;
+        okButton.textContent = submitter?.textContent.trim() || 'Lanjutkan';
+        okButton.classList.toggle('btn-danger', Boolean(submitter?.classList.contains('btn-danger')));
+        dialog.showModal();
+    });
+
+    okButton.addEventListener('click', () => {
+        dialog.close();
+
+        if (!pending) {
+            return;
+        }
+
+        const { form, submitter } = pending;
+        pending = null;
+        alreadyConfirmed.add(form);
+
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit(submitter ?? undefined);
+        } else {
+            form.submit();
+        }
+    });
+
+    cancelButton.addEventListener('click', () => {
+        pending = null;
+        dialog.close();
+    });
+
+    dialog.addEventListener('cancel', () => {
+        pending = null;
     });
 })();
 
