@@ -1,0 +1,38 @@
+# Keeps the build context (and so the image) free of secrets, VCS history,
+# host-installed dependencies and generated output. Config comes from
+# environment variables at runtime (compose.yaml / `docker run --env-file`),
+# never from a baked-in .env.
+
+# Secrets - every env file except the committed template
+.env
+.env.*
+!.env.example
+
+# VCS and editor/OS noise
+.git
+.gitignore
+.vscode
+.idea
+*.log
+Thumbs.db
+.DS_Store
+
+# Dependencies are installed inside the image from composer.lock,
+# never copied from the host
+vendor
+
+# Generated / runtime data
+coverage
+.phpunit.cache
+.phpunit.result.cache
+public/uploads/products/*
+!public/uploads/products/.gitkeep
+docker/mysql-data
+docker/redis-data
+
+# Not needed to run the app. database/ is mounted into the mysql container
+# instead (and test-db-init.sql holds the test DB user's password).
+database
+docs
+*.md
+!README.md

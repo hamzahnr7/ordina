@@ -7,6 +7,7 @@ services:
       - "8080:80"
     volumes:
       - ./:/var/www/html
+      - product-uploads:/var/www/html/public/uploads/products
     environment:
       APP_ENV: ${APP_ENV}
       APP_URL: ${APP_URL}
@@ -28,7 +29,7 @@ services:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
 
   mysql:
     image: mysql:8.0
@@ -46,23 +47,22 @@ services:
       - mysql-data:/var/lib/mysql
       - ./database:/docker-entrypoint-initdb.d
     healthcheck:
-      # On a fresh/empty volume, mysqld only starts accepting connections on
-      # 3306 *after* every docker-entrypoint-initdb.d script has finished -
-      # so this doubles as "schema-and-seed.sql + test-db-init.sql are done",
-      # not just "the process is up". `web`'s depends_on waits on this.
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 30s
-
-  # Session store only (see docs/architecture/adr-0003-redis-session-store.md).
-  # MySQL remains the single system-of-record for all business/inventory data.
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   mysql-data:
+  product-uploads:
