@@ -60,4 +60,10 @@ final class InMemoryUserRepository implements UserRepositoryInterface
         $user = $this->usersById[$id];
         $this->usersById[$id] = new User($user->id, $user->name, $user->email, $user->passwordHash, $user->role, $active);
     }
+
+    public function updatePassword(int $id, string $passwordHash): void
+    {
+        $user = $this->usersById[$id];
+        $this->usersById[$id] = new User($user->id, $user->name, $user->email, $passwordHash, $user->role, $user->isActive);
+    }
 }

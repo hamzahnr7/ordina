@@ -44,12 +44,12 @@ final class Gate
 
     public static function allows(Role $role, Permission $permission): bool
     {
-        return in_array($permission, self::ROLE_PERMISSIONS[$role->value] ?? [], true);
+        return in_array($permission, self::ROLE_PERMISSIONS[$role->value], true);
     }
 
     /** @return list<Permission> */
     public static function permissionsFor(Role $role): array
     {
-        return self::ROLE_PERMISSIONS[$role->value] ?? [];
+        return self::ROLE_PERMISSIONS[$role->value];
     }
 }

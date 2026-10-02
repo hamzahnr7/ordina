@@ -2,43 +2,47 @@
 
 declare(strict_types=1);
 
-// Standalone script (JOB-01) - run via:
+// Standalone script (JOB-01) - outside the web request cycle, the way a cron
+// job would run in production. Run via:
 //   docker compose exec web php scripts/check-low-stock.php
+//
+// Uses the same repository as the dashboard (MysqlDashboardRepository), so the
+// "low stock" rule here can never drift from what DASH-01 and the FIND-01
+// filter show: total stock across all warehouses < reorder_point, active
+// products only, products with no stock row at all counted as 0.
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\Config;
 use App\Core\Database;
+use App\Repository\Mysql\MysqlDashboardRepository;
 
 Config::load(__DIR__ . '/../.env');
 
-$pdo = Database::connection();
+$dashboard = new MysqlDashboardRepository(Database::connection());
+$count = $dashboard->lowStockProductCount();
 
-$stmt = $pdo->query(
-    'SELECT p.sku, p.name, w.name AS warehouse_name, ps.quantity, p.reorder_point
-     FROM product_stocks ps
-     JOIN products p ON p.id = ps.product_id
-     JOIN warehouses w ON w.id = ps.warehouse_id
-     WHERE ps.quantity <= p.reorder_point AND p.is_active = 1
-     ORDER BY p.name, w.name'
-);
+echo 'Low-stock check - ' . date('Y-m-d H:i:s') . PHP_EOL;
 
-$rows = $stmt->fetchAll();
-
-if ($rows === []) {
-    echo "No products below reorder point.\n";
+if ($count === 0) {
+    echo 'No products below reorder point.' . PHP_EOL;
     exit(0);
 }
 
-printf("%-12s %-30s %-20s %8s %8s\n", 'SKU', 'Product', 'Warehouse', 'Qty', 'Reorder');
+echo "{$count} product(s) below reorder point:" . PHP_EOL . PHP_EOL;
+printf("%-10s %-32s %8s %8s %9s\n", 'SKU', 'Product', 'Stock', 'Reorder', 'Shortfall');
+echo str_repeat('-', 71) . PHP_EOL;
 
-foreach ($rows as $row) {
+foreach ($dashboard->lowStockProducts($count) as $row) {
+    $stock = (int) $row['total_stock'];
+    $reorder = (int) $row['reorder_point'];
+
     printf(
-        "%-12s %-30s %-20s %8d %8d\n",
+        "%-10s %-32s %8d %8d %9d\n",
         $row['sku'],
-        $row['name'],
-        $row['warehouse_name'],
-        (int) $row['quantity'],
-        (int) $row['reorder_point']
+        mb_strimwidth((string) $row['name'], 0, 32, '…'),
+        $stock,
+        $reorder,
+        $reorder - $stock
     );
 }

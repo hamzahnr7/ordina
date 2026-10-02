@@ -32,6 +32,10 @@
 | PO goods receipt (PO-01) | Receiving more than what's left on a still-open PO is rejected | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
 | PO goods receipt (PO-01) | Receiving anything against an already fully-Received PO is rejected | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
 | PO cancellation (PO-01) | Cannot cancel once fully Received | `tests/Unit/PurchaseOrderServiceTest.php` | Passing |
+| Own profile (§1.2) | Password change succeeds with the correct current password | `tests/Unit/ProfileServiceTest.php` | Passing |
+| Own profile (§1.2) | Wrong current password rejected; old password still works | `tests/Unit/ProfileServiceTest.php` | Passing |
+| Own profile (§1.2) | New password shorter than 8 characters rejected | `tests/Unit/ProfileServiceTest.php` | Passing |
+| Own profile (§1.2) | Confirmation that doesn't match rejected | `tests/Unit/ProfileServiceTest.php` | Passing |
 | SO validation (SO-01) | Create rejects an empty item list | `tests/Unit/SalesOrderServiceTest.php` | Passing |
 | SO validation (SO-01) | Create rejects an unknown customer_id | `tests/Unit/SalesOrderServiceTest.php` | Passing |
 | SO validation (SO-01) | Sell price below the product's own registered price is rejected; at/above it is accepted (price may only be raised, never cut) | `tests/Unit/SalesOrderServiceTest.php` | Passing |
@@ -47,9 +51,19 @@
 ## Integration tests (TEST-02) - target: >=3, real MySQL in Docker
 | Scenario | Test file | Status |
 |----------|-----------|--------|
-| DB connectivity smoke test | `tests/Integration/ExampleConnectionTest.php` | Passing (scaffold) |
-| Goods receipt increases ProductStock + writes Receipt ledger row against real MySQL | TBD | Not started (unit-tested against InMemory fakes in `PurchaseOrderServiceTest`, not yet against real MySQL) |
-| Second goods issue rejected once stock exhausted by the first (ARCH-02), against real MySQL | TBD | Not started (unit-tested against InMemory fakes in `SalesOrderServiceTest`; `decrementIfAvailable()`'s actual InnoDB locking behavior not yet verified end-to-end - see `docs/quality/tech-debt.md` #16) |
+Each test truncates every table in `ordina_test` and loads the same small
+fixture set in `setUp()` (`DatabaseTestCase`), then wires the **real** Mysql
+repositories and `PdoTransactionManager`. That means transactions, CHECK
+constraints and the conditional `UPDATE` really execute.
+
+| Scenario | Test file | Status |
+|----------|-----------|--------|
+| Goods receipt end-to-end: partial (4/10) then full (6/10). ProductStock 5 -> 9 -> 15, status Ordered -> PartiallyReceived -> Received, 2 Receipt ledger rows, ledger balance == stock | `tests/Integration/GoodsReceiptIntegrationTest.php` | Passing (2026-10-02, MySQL 8.0 / PHP 8.2 in Docker) |
+| Goods receipt for a product with no stock row in that warehouse creates the row (`incrementQuantity` insert path) | `tests/Integration/GoodsReceiptIntegrationTest.php` | Passing (2026-10-02, MySQL 8.0 / PHP 8.2 in Docker) |
+| **ARCH-02**: stock 10, SO#1 issues 8, SO#2 asks for 5 and is rejected. Stock stays 2, SO#2 stays Approved, 0 ledger rows for SO#2 | `tests/Integration/GoodsIssueIntegrationTest.php` | Passing (2026-10-02, MySQL 8.0 / PHP 8.2 in Docker) |
+| **ARCH-02 rollback**: 2-item SO where item 1 is sufficient and item 2 is not. The item-1 decrement is rolled back, so stock is unchanged and no ledger rows remain | `tests/Integration/GoodsIssueIntegrationTest.php` | Passing (2026-10-02, MySQL 8.0 / PHP 8.2 in Docker) |
+| SoD: service refuses the creator approving their own SO; status stays PendingApproval and approved_by stays NULL | `tests/Integration/SegregationOfDutiesIntegrationTest.php` | Passing (2026-10-02, MySQL 8.0 / PHP 8.2 in Docker) |
+| SoD backstop: a direct `UPDATE ... approved_by = created_by` is rejected by `chk_so_approver_not_creator` | `tests/Integration/SegregationOfDutiesIntegrationTest.php` | Passing (2026-10-02, MySQL 8.0 / PHP 8.2 in Docker) |
 | REPORT-01 CSV export produces correct rows for a given date range, against real MySQL | TBD | Not started (see `docs/quality/tech-debt.md` #18) |
 
 ## REPORT-01 evidence (manual, per brief - "File CSV hasil ekspor dengan rentang tanggal berbeda")
@@ -68,6 +82,8 @@
 | Product reorder_point | Negative number | Rejected | Rejected (`ProductServiceTest`) |
 | User email | Duplicate email | Rejected | Rejected (`UserServiceTest`) |
 | SO qty | 0 or negative | Rejected | Rejected (`SalesOrderServiceTest`'s item validation, same pattern as PO) |
+| PO/SO item rows | Submit a 2-row PO (or SO) with an invalid header field | Rejected, and **both item rows come back** with product, qty and price intact | Verified by rendering the views with `old['items']` (2 PO rows restored, product selected, hidden price kept; SO keeps the `min` price floor). In-browser click-through still TBD |
+| SO sell price | Lower than the product's sell price | Rejected | Rejected (`SalesOrderServiceTest`), and the restored row keeps `min=<product price>` |
 
 ## Failure paths (ERR-01)
 | Path | Expected | Actual |
@@ -81,4 +97,10 @@
 docker compose exec web composer test            # unit + integration
 docker compose exec web composer test:unit
 docker compose exec web composer test:integration
+docker compose exec web composer test:coverage    # unit + coverage -> coverage/html/index.html
 ```
+
+## Code coverage (Unit suite)
+| Date | Lines | Methods | Classes | Notes |
+|------|-------|---------|---------|-------|
+| 2026-10-02 | 17.42% (414/2376) | 20.62% (80/388) | 7.69% (6/78) | Whole `app/`, including controllers, views wiring and Mysql repositories that unit tests never load by design (Mysql repos are covered by TEST-02 instead). Service layer, where the business rules live: AuthService 100%, ProductAvailabilityService 100%, ProfileService 92%, PurchaseOrderService 71%, SalesOrderService 68%, UserService 55%, ProductService 40% lines |

@@ -21,4 +21,7 @@ interface UserRepositoryInterface
     public function save(User $user): User;
 
     public function setActive(int $id, bool $active): void;
+
+    /** save() never touches the password on update, so changing it is its own explicit call. */
+    public function updatePassword(int $id, string $passwordHash): void;
 }

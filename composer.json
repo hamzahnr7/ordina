@@ -26,6 +26,10 @@
         "test": "phpunit",
         "test:unit": "phpunit --testsuite Unit",
         "test:integration": "phpunit --testsuite Integration",
-        "analyse": "phpstan analyse app --level=5"
+        "test:coverage": [
+            "@putenv XDEBUG_MODE=coverage",
+            "@php -d pcov.enabled=1 vendor/bin/phpunit --testsuite Unit --coverage-text --coverage-html coverage/html --coverage-clover coverage/clover.xml"
+        ],
+        "analyse": "phpstan analyse --memory-limit=1G"
     }
 }

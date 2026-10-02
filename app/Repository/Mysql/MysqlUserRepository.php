@@ -92,4 +92,10 @@ final class MysqlUserRepository implements UserRepositoryInterface
         $stmt = $this->connection->prepare('UPDATE users SET is_active = :is_active WHERE id = :id');
         $stmt->execute(['is_active' => $active ? 1 : 0, 'id' => $id]);
     }
+
+    public function updatePassword(int $id, string $passwordHash): void
+    {
+        $stmt = $this->connection->prepare('UPDATE users SET password_hash = :password_hash WHERE id = :id');
+        $stmt->execute(['password_hash' => $passwordHash, 'id' => $id]);
+    }
 }

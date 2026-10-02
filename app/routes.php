@@ -9,6 +9,7 @@ use App\Controller\CustomerController;
 use App\Controller\DashboardController;
 use App\Controller\HomeController;
 use App\Controller\ProductController;
+use App\Controller\ProfileController;
 use App\Controller\PurchaseOrderController;
 use App\Controller\ReportController;
 use App\Controller\SalesOrderController;
@@ -26,6 +27,10 @@ $router->post('/login', [AuthController::class, 'login']);
 $router->post('/logout', [AuthController::class, 'logout']);
 
 $router->get('/dashboard', [DashboardController::class, 'index']);
+
+// §1.2 "profil sendiri" - every role, own account only.
+$router->get('/profile', [ProfileController::class, 'show']);
+$router->post('/profile/password', [ProfileController::class, 'updatePassword']);
 
 // USR-01 - Admin only (enforced server-side via UserController::authorize()).
 $router->get('/users', [UserController::class, 'index']);

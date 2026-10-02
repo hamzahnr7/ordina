@@ -3,6 +3,7 @@
 /.env.local
 /.phpunit.cache/
 /.phpunit.result.cache
+/coverage/
 *.log
 docker/mysql-data/
 docker/redis-data/

@@ -32,8 +32,10 @@ services:
 
   mysql:
     image: mysql:8.0
+    command: --default-time-zone=+07:00
     restart: unless-stopped
     environment:
+      TZ: Asia/Jakarta
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}

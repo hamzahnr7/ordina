@@ -39,7 +39,7 @@ times) and PHPStan level 5 (`[OK] No errors`).
   // in each index():
   $perPage = $this->perPageFromQuery();
   ```
-- **Commit**: `refactor: extract shared per-page, item-row and status-badge logic` (hash: TBD)
+- **Commit**: `refactor: extract shared per-page, item-row and status-badge logic` (hash: `e6aca0d`)
 
 ---
 

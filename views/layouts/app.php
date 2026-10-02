@@ -77,7 +77,7 @@ $navIcon = static function (string $key): string {
 
                 <div class="sidebar-user">
                     <div class="sidebar-user-info">
-                        <span class="sidebar-user-name"><?= htmlspecialchars($navUser['name'], ENT_QUOTES) ?></span>
+                        <a href="/profile" class="sidebar-user-name" title="Profil saya"<?= $currentPath === '/profile' ? ' aria-current="page"' : '' ?>><?= htmlspecialchars($navUser['name'], ENT_QUOTES) ?></a>
                         <span class="role-badge"><?= htmlspecialchars($navUser['role'], ENT_QUOTES) ?></span>
                     </div>
                     <form method="post" action="/logout">

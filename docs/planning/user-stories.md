@@ -37,6 +37,6 @@ See brief §4.3 (microservices, message queue, cloud deployment, CI/CD, Kubernet
 | 8 | Dashboard per role (inventory value, low-stock, order status breakdowns) | DASH-01 | Done |
 | 9 | CSV report (stock ledger + PO/SO status, date-ranged, reuses dashboard's repositories) | REPORT-01 | Done |
 | 10 | JSON API endpoint | API-01 | Done |
-| 11 | Low-stock scheduled script | JOB-01 | Scaffolded (untested against real data yet) |
+| 11 | Low-stock scheduled script | JOB-01 | Done - reuses the dashboard low-stock query (`MysqlDashboardRepository`); verified 2026-10-02 against the new seed (6 products listed) |
 | 12 | Role/Permission/Menu architecture | ARCH-01 (SoD) | Done |
 | 13 | Concurrency-safe stock mutation (atomic conditional UPDATE) | ARCH-02 | Done |

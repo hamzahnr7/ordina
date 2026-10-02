@@ -35,7 +35,19 @@ final class InMemoryPurchaseOrderRepository implements PurchaseOrderRepositoryIn
         $total = count($items);
         $offset = max(0, ($page - 1) * $perPage);
 
-        return ['items' => array_slice(array_values($items), $offset, $perPage), 'total' => $total];
+        // Same row shape as MysqlPurchaseOrderRepository (po.* + joined names), not entities.
+        $rows = array_map(static fn (PurchaseOrder $po): array => [
+            'id' => $po->id,
+            'supplier_id' => $po->supplierId,
+            'warehouse_id' => $po->warehouseId,
+            'status' => $po->status->value,
+            'order_date' => $po->orderDate,
+            'created_by' => $po->createdBy,
+            'supplier_name' => "Supplier #{$po->supplierId}",
+            'warehouse_name' => "Warehouse #{$po->warehouseId}",
+        ], array_slice(array_values($items), $offset, $perPage));
+
+        return ['items' => $rows, 'total' => $total];
     }
 
     public function save(PurchaseOrder $purchaseOrder): PurchaseOrder

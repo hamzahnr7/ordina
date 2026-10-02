@@ -40,7 +40,19 @@ final class InMemorySalesOrderRepository implements SalesOrderRepositoryInterfac
         $total = count($items);
         $offset = max(0, ($page - 1) * $perPage);
 
-        return ['items' => array_slice($items, $offset, $perPage), 'total' => $total];
+        // Same row shape as MysqlSalesOrderRepository (so.* + joined names), not entities.
+        $rows = array_map(static fn (SalesOrder $so): array => [
+            'id' => $so->id,
+            'customer_id' => $so->customerId,
+            'warehouse_id' => $so->warehouseId,
+            'status' => $so->status->value,
+            'created_by' => $so->createdBy,
+            'approved_by' => $so->approvedBy,
+            'customer_name' => "Customer #{$so->customerId}",
+            'warehouse_name' => "Warehouse #{$so->warehouseId}",
+        ], array_slice($items, $offset, $perPage));
+
+        return ['items' => $rows, 'total' => $total];
     }
 
     public function save(SalesOrder $salesOrder): SalesOrder

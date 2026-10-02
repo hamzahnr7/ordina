@@ -13,9 +13,7 @@ for the full specification this repo implements.
 > per-role dashboard aggregation (DASH-01), and date-ranged CSV reports
 > (REPORT-01) are all done. What's left is polish and evidence, not
 > features - see `docs/quality/tech-debt.md` and the backlog in
-> `docs/planning/user-stories.md` for the honest remaining list (seed data
-> volume, a few TEST-02 integration tests, the refactor log/static analysis
-> report content, etc.).
+> `docs/planning/user-stories.md` for the honest remaining list.
 
 ## Tech stack
 - PHP 8.2+ native OOP (Controller/Service/Repository/Entity), no framework
@@ -155,8 +153,30 @@ docker compose exec web composer install   # first time / after dependency chang
 docker compose exec web composer test              # unit + integration
 docker compose exec web composer test:unit
 docker compose exec web composer test:integration
+docker compose exec web composer test:coverage      # unit test + code coverage report
 docker compose exec web composer analyse            # PHPStan level 5
 ```
+
+### Code coverage
+`composer test:coverage` runs the Unit suite with the PCOV driver switched on
+for that run only (it's installed in the image but disabled by default, so
+normal requests and `composer test` aren't slowed down). It prints a summary
+to the terminal and writes:
+- `coverage/html/index.html` - browsable per-class/per-line report
+- `coverage/clover.xml` - machine-readable, for CI or other tools
+
+`coverage/` is gitignored. PCOV was added to `docker/php/Dockerfile`, so an
+existing container needs a rebuild once: `docker compose up -d --build web`.
+
+Running `composer test:coverage` straight from a host PHP (e.g. Windows)
+instead of inside the container fails with "No code coverage driver
+available" unless that PHP has PCOV or Xdebug installed. The script works
+with either: it passes `-d pcov.enabled=1` for PCOV and sets
+`XDEBUG_MODE=coverage` for Xdebug.
+
+Coverage only counts the Unit suite, so `app/Repository/Mysql/*` and the
+Controllers will show low/no coverage by design - they're exercised against
+real MySQL/HTTP, not by unit tests (see `docs/quality/tech-debt.md` #16-#18).
 
 `test-db-init.sql` runs automatically on a **fresh** `mysql` volume (same as
 `schema-and-seed.sql`). If you already had the stack running before this
@@ -169,6 +189,11 @@ docker compose exec -T mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' 
 ```bash
 docker compose exec web php scripts/check-low-stock.php
 ```
+Prints every active product whose **total** stock across all warehouses is
+below its reorder point, with its shortfall. It uses the same query as the
+dashboard (`MysqlDashboardRepository`), so the two always agree. Against the
+seed data it lists 6 products. In production this would run from cron, e.g.
+`0 7 * * * php /var/www/html/scripts/check-low-stock.php`.
 
 ## Project structure
 ```
@@ -191,24 +216,16 @@ docs/testing/           test scenarios & results
 ```
 
 ## Known limitations
-- No "edit items" action for a Draft PO or SO, and validation errors on
-  either create form don't restore the dynamic item rows (tracked in
-  `docs/quality/tech-debt.md`).
-- `decrementIfAvailable()`'s oversell prevention, `MysqlDashboardRepository`'s
-  aggregation queries, and the REPORT-01 CSV endpoints are unit-tested/
-  hand-reviewed only - not yet verified as TEST-02 integration tests against
-  real MySQL (tracked in `docs/quality/tech-debt.md` #16/#17/#18).
-- Seed data is intentionally small; must grow to the §7.1 minimums (30
-  products, 25 combined orders, 2 warehouses, 2+2 non-Admin accounts)
-  before final submission.
-- No password-reset action for existing users yet (see `docs/quality/tech-debt.md`).
+- No "edit items" action for a Draft PO or SO (tracked in `docs/quality/tech-debt.md`).
+- `MysqlDashboardRepository`'s aggregation queries and the REPORT-01 CSV
+  endpoints are hand-reviewed only, with no integration test yet (tracked in
+  `docs/quality/tech-debt.md` #17/#18).
+- The ARCH-02 integration test runs the two goods issues one after another
+  on one connection, not truly in parallel.
+- Users can change their own password at `/profile`, but there is no Admin
+  "reset password" for another user yet (see `docs/quality/tech-debt.md` #3).
 - Replacing a product's image on edit doesn't delete the old file from
   `public/uploads/products/` yet (tracked in `docs/quality/tech-debt.md`).
-- `docs/quality/refactor-log.md` and `docs/quality/static-analysis.md` are
-  still templates awaiting real content (a genuine refactor did happen this
-  session - see `docs/architecture/class-diagram-as-built.md`'s
-  `View::render()` extraction - but it hasn't been written up there yet, and
-  `composer analyse` hasn't been run in an environment with PHP available).
 
 ## AI usage
 Disclosed in `ai-usage-log.md`.

@@ -289,6 +289,9 @@ async function fetchJson(url, options = {}) {
     warehouseSelect.addEventListener('change', updateAllRows);
 
     new MutationObserver(updateAllRows).observe(body, { childList: true });
+
+    // Rows restored after a failed validation (VAL-01) already have a product picked.
+    updateAllRows();
 })();
 
 // Live order summary (item count / total qty / estimated total) for the

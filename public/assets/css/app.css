@@ -189,12 +189,19 @@ code {
 }
 
 .sidebar-user-name {
+    display: block;
     color: #fff;
     font-size: 0.85rem;
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-decoration: none;
+}
+
+.sidebar-user-name:hover,
+.sidebar-user-name[aria-current="page"] {
+    text-decoration: underline;
 }
 
 .sidebar-user .role-badge {
