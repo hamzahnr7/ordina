@@ -12,9 +12,30 @@
             <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
+    <!--
+        Coverage scope = the business-logic layers (Service, Domain, Entity,
+        Core/Authorization, Core/Transaction, Router, Config, View). Excluded on
+        purpose, each verified another way - see docs/testing/test-scenarios.md:
+          - Repository/Mysql: needs a real database -> TEST-02 integration tests
+          - Repository/InMemory: test fakes themselves, not production code
+          - Controller/, Core/Controller.php, routes.php: HTTP wiring; redirect()
+            calls exit, which would end the PHPUnit process
+          - Core/Session.php, Core/RedisSessionHandler.php, Core/Database.php:
+            thin wrappers around session_*(), Redis and PDO connect
+    -->
     <source>
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <directory>app/Repository/Mysql</directory>
+            <directory>app/Repository/InMemory</directory>
+            <directory>app/Controller</directory>
+            <file>app/routes.php</file>
+            <file>app/Core/Controller.php</file>
+            <file>app/Core/Session.php</file>
+            <file>app/Core/RedisSessionHandler.php</file>
+            <file>app/Core/Database.php</file>
+        </exclude>
     </source>
 </phpunit>

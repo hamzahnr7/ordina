@@ -103,4 +103,38 @@ docker compose exec web composer test:coverage    # unit + coverage -> coverage/
 ## Code coverage (Unit suite)
 | Date | Lines | Methods | Classes | Notes |
 |------|-------|---------|---------|-------|
-| 2026-10-02 | 17.42% (414/2376) | 20.62% (80/388) | 7.69% (6/78) | Whole `app/`, including controllers, views wiring and Mysql repositories that unit tests never load by design (Mysql repos are covered by TEST-02 instead). Service layer, where the business rules live: AuthService 100%, ProductAvailabilityService 100%, ProfileService 92%, PurchaseOrderService 71%, SalesOrderService 68%, UserService 55%, ProductService 40% lines |
+| 2026-10-02 (first run) | 17.42% (414/2376) | 20.62% (80/388) | 7.69% (6/78) | 45 tests; whole `app/` measured, including layers unit tests never load |
+| 2026-10-02 | **100% (758/758)** | **100% (139/139)** | **100% (35/35)** | 162 tests, PCOV in Docker (PHP 8.2); scope below |
+
+**What is measured:** Service, Domain, Entity, Core/Authorization,
+Core/Transaction, Router, Config and View, i.e. every place a business rule
+lives.
+
+**What is excluded** (`phpunit.xml` `<source><exclude>`), and how each is
+verified instead:
+
+| Excluded | Why not unit-tested | Verified by |
+|----------|---------------------|-------------|
+| `app/Repository/Mysql/` | Needs a real database | TEST-02 integration tests (real MySQL) |
+| `app/Repository/InMemory/` | Test fakes, not production code | Used by every unit test |
+| `app/Controller/`, `app/Core/Controller.php`, `app/routes.php` | HTTP wiring; `redirect()` calls `exit`, which would end the PHPUnit process | Manual click-through (ERR-01 / VAL-01 tables above) |
+| `app/Core/Session.php`, `RedisSessionHandler.php`, `Database.php` | Thin wrappers around `session_*()`, Redis and `new PDO` | Every login and request; integration tests connect through `Database::connect()` |
+
+**One ignored line:** `ProductImageUploader.php` `move_uploaded_file()` is
+marked `@codeCoverageIgnore`. `is_uploaded_file()` is only true for a file
+received through a real HTTP POST, so the line cannot run under PHPUnit. The
+`rename()` branch next to it, the oversize/type/mkdir/move-failure checks, and
+the happy path are all covered.
+
+**Platform note:** `ProductImageUploaderTest::test_file_that_cannot_be_moved_is_an_error`
+uses `/proc` as an unwritable directory, so it runs on Linux (Docker) and is
+skipped on a Windows host PHP. Coverage numbers come from Docker.
+
+New unit test files in this pass:
+- Domain/Entity: `StatusEnumTest` (full status-rule truth table), `EntityHydrationTest`
+- Core: `MenuRegistryTest`, `PdoTransactionManagerTest`, `RouterTest`, `ConfigTest`, `ViewTest`
+- Services: `CategoryServiceTest`, `CustomerServiceTest`, `SupplierServiceTest`,
+  `WarehouseServiceTest`, `DashboardServiceTest`, `ReportServiceTest`,
+  `ProductImageUploaderTest`
+- Extended: `GateTest`, `ProductServiceTest`, `UserServiceTest`,
+  `ProfileServiceTest`, `PurchaseOrderServiceTest`, `SalesOrderServiceTest`

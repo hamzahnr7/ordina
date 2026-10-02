@@ -38,4 +38,27 @@ final class GateTest extends TestCase
         self::assertFalse(Gate::allows(Role::Sales, Permission::ProcessGoodsIssue));
         self::assertFalse(Gate::allows(Role::Sales, Permission::ProcessGoodsReceipt));
     }
+
+    public function test_permissions_for_lists_exactly_what_allows_grants(): void
+    {
+        foreach (Role::cases() as $role) {
+            $granted = Gate::permissionsFor($role);
+
+            self::assertNotEmpty($granted);
+
+            foreach (Permission::cases() as $permission) {
+                self::assertSame(
+                    in_array($permission, $granted, true),
+                    Gate::allows($role, $permission),
+                    "{$role->value} / {$permission->value}"
+                );
+            }
+        }
+    }
+
+    public function test_warehouse_staff_proposes_but_cannot_create_purchase_orders(): void
+    {
+        self::assertTrue(Gate::allows(Role::WarehouseStaff, Permission::ProposePurchaseOrder));
+        self::assertFalse(Gate::allows(Role::WarehouseStaff, Permission::CreatePurchaseOrder));
+    }
 }

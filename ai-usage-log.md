@@ -61,6 +61,8 @@ Per brief §6.2 (DISCLOSE / REVIEW / VERIFY / TEST).
 
 The dev `ordina` database was **not** reseeded, because resetting the volume needs the participant's go-ahead |
 
+| 2026-10-02 | Claude Code | Raised unit-test coverage from 17% to **100% lines/methods/classes** over the business-logic layers. 162 unit tests (was 45), 14 new test files and 6 extended. Coverage scope set in `phpunit.xml` `<source><exclude>` (Mysql/InMemory repositories, controllers + routes, session/Redis/PDO wrappers), with the reason for each exclusion and how it is verified instead written in `phpunit.xml`, README and `test-scenarios.md` | "tolong buatkan unit test agar coverage unit test yang dihasilkan nanti mencapai 100% di semua aspek" -> scope chosen: "100% logika bisnis"; the remaining line -> "Tandai @codeCoverageIgnore" | Yes. Production code unchanged except one `// @codeCoverageIgnore` comment (plus a 2-line reason) on `move_uploaded_file()` in `ProductImageUploader`, which only runs for a real HTTP upload; approved explicitly | Tests target behavior, not just lines (full status truth table, SKU immutability, Admin invisibility, own-password rules, transaction commit/rollback via mocked PDO, report merge order). Run in Docker with PCOV: `OK (162 tests, 454 assertions)`, 100% (758/758). Full suite incl. integration `OK (168 tests)`. PHPStan level 5 clean for `app` and `tests` |
+
 ## Notes
 - All architecture decisions in `docs/architecture/adr-*.md` must be
   re-explained by the participant unaided during technical defense,

@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use App\Core\Transaction\NullTransactionManager;
 use App\Domain\PurchaseOrderStatus;
 use App\Entity\Product;
+use App\Entity\PurchaseOrder;
 use App\Entity\Supplier;
 use App\Entity\Warehouse;
 use App\Repository\InMemory\InMemoryProductRepository;
@@ -207,5 +208,117 @@ final class PurchaseOrderServiceTest extends TestCase
 
         $this->expectException(ForbiddenOperationException::class);
         $this->service->cancel($poId);
+    }
+
+    public function test_cancel_moves_a_draft_po_to_cancelled(): void
+    {
+        $poId = $this->createDraftPo();
+
+        $this->service->cancel($poId);
+
+        self::assertSame(PurchaseOrderStatus::Cancelled, $this->service->find($poId)->status);
+    }
+
+    public function test_receipt_with_only_zero_quantities_is_rejected_and_changes_nothing(): void
+    {
+        $poId = $this->createDraftPo();
+        $this->service->markOrdered($poId);
+        $itemId = $this->items->findByPurchaseOrderId($poId)[0]->id;
+
+        try {
+            $this->service->receiveGoods($poId, [$itemId => 0], performedBy: 1);
+            self::fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            self::assertArrayHasKey('receipt', $e->errors());
+        }
+
+        self::assertSame(PurchaseOrderStatus::Ordered, $this->service->find($poId)->status);
+        self::assertSame([], $this->ledger->findByReference('PO', $poId));
+    }
+
+    public function test_create_reports_every_invalid_header_and_item_field(): void
+    {
+        try {
+            $this->service->create(
+                ['supplier_id' => 0, 'warehouse_id' => 999, 'order_date' => '2026-02-30'],
+                [['product_id' => 999, 'qty_ordered' => 0, 'buy_price' => -1]],
+                1,
+            );
+            self::fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            self::assertSame(
+                ['supplier_id', 'warehouse_id', 'order_date', 'item_0_product', 'item_0_qty', 'item_0_price'],
+                array_keys($e->errors())
+            );
+        }
+    }
+
+    public function test_create_rejects_missing_order_date(): void
+    {
+        try {
+            $this->service->create(
+                ['supplier_id' => $this->supplierId, 'warehouse_id' => $this->warehouseId],
+                [['product_id' => $this->productId, 'qty_ordered' => 1, 'buy_price' => 1000]],
+                1,
+            );
+            self::fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            self::assertSame(['order_date'], array_keys($e->errors()));
+        }
+    }
+
+    public function test_detail_resolves_names_and_includes_ledger(): void
+    {
+        $poId = $this->createDraftPo(qtyOrdered: 3);
+        $this->service->markOrdered($poId);
+        $itemId = $this->items->findByPurchaseOrderId($poId)[0]->id;
+        $this->service->receiveGoods($poId, [$itemId => 3], performedBy: 1);
+
+        $detail = $this->service->detail($poId);
+
+        self::assertNotNull($detail);
+        self::assertSame('Supplier Test', $detail['supplierName']);
+        self::assertSame('Gudang Test', $detail['warehouseName']);
+        self::assertSame('Produk Test', $detail['items'][0]['productName']);
+        self::assertSame('SKU-TEST', $detail['items'][0]['productSku']);
+        self::assertCount(1, $detail['ledger']);
+    }
+
+    public function test_detail_falls_back_to_dash_for_missing_references(): void
+    {
+        $po = $this->purchaseOrders->save(new PurchaseOrder(null, 999, 999, PurchaseOrderStatus::Draft, '2026-01-01', 1));
+        $this->items->insertMany((int) $po->id, [['product_id' => 999, 'qty_ordered' => 1, 'buy_price' => 1]]);
+
+        $detail = $this->service->detail((int) $po->id);
+
+        self::assertNotNull($detail);
+        self::assertSame('-', $detail['supplierName']);
+        self::assertSame('-', $detail['warehouseName']);
+        self::assertSame('-', $detail['items'][0]['productName']);
+        self::assertSame('-', $detail['items'][0]['productSku']);
+    }
+
+    public function test_detail_of_unknown_po_is_null(): void
+    {
+        self::assertNull($this->service->detail(999));
+    }
+
+    public function test_paginate_filters_sorts_and_normalizes_paging(): void
+    {
+        $first = $this->createDraftPo();
+        $second = $this->createDraftPo();
+        $this->service->markOrdered($second);
+
+        $all = $this->service->paginate([], 'asc', page: -3, perPage: 1);
+        self::assertSame(1, $all['page']);
+        self::assertSame(2, $all['total']);
+        self::assertSame(2, $all['totalPages']);
+        self::assertSame('asc', $all['sortDir']);
+        self::assertCount(1, $all['items']);
+
+        $ordered = $this->service->paginate(['status' => 'Ordered'], 'anything-else', page: 1);
+        self::assertSame('desc', $ordered['sortDir']);
+        self::assertSame([$second], array_column($ordered['items'], 'id'));
+        self::assertNotContains($first, array_column($ordered['items'], 'id'));
     }
 }

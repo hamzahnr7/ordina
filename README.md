@@ -174,9 +174,18 @@ available" unless that PHP has PCOV or Xdebug installed. The script works
 with either: it passes `-d pcov.enabled=1` for PCOV and sets
 `XDEBUG_MODE=coverage` for Xdebug.
 
-Coverage only counts the Unit suite, so `app/Repository/Mysql/*` and the
-Controllers will show low/no coverage by design - they're exercised against
-real MySQL/HTTP, not by unit tests (see `docs/quality/tech-debt.md` #16-#18).
+**Current result: 100% lines / methods / classes** (758 lines, 162 unit
+tests) over the business-logic layers. The coverage scope is set in
+`phpunit.xml` `<source>`, which names what is **excluded** and why:
+- `Repository/Mysql`, which needs a database and is covered by `tests/Integration`
+- `Repository/InMemory`, the test fakes themselves
+- `Controller/`, `Core/Controller.php` and `routes.php`: HTTP wiring, and
+  `redirect()` calls `exit`
+- the session, Redis and PDO-connect wrappers
+
+One line is marked `@codeCoverageIgnore`: `move_uploaded_file()` in
+`ProductImageUploader`, which only runs for a real HTTP upload. See
+`docs/testing/test-scenarios.md`.
 
 `test-db-init.sql` runs automatically on a **fresh** `mysql` volume (same as
 `schema-and-seed.sql`). If you already had the stack running before this

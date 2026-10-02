@@ -8,6 +8,7 @@ use App\Core\Transaction\NullTransactionManager;
 use App\Domain\SalesOrderStatus;
 use App\Entity\Customer;
 use App\Entity\Product;
+use App\Entity\SalesOrder;
 use App\Entity\Warehouse;
 use App\Repository\InMemory\InMemoryCustomerRepository;
 use App\Repository\InMemory\InMemoryProductRepository;
@@ -250,5 +251,116 @@ final class SalesOrderServiceTest extends TestCase
             self::assertSame(0, $this->stocks->findByProductId($this->productId)[0]['quantity']);
             self::assertCount(0, $this->ledger->findByReference('SO', $secondSoId));
         }
+    }
+
+    public function test_approve_rejected_unless_pending_approval(): void
+    {
+        $soId = $this->createDraftSo();
+
+        $this->expectException(ForbiddenOperationException::class);
+
+        $this->service->approve($soId, self::APPROVER_ID);
+    }
+
+    public function test_reject_rejected_unless_pending_approval(): void
+    {
+        $soId = $this->createDraftSo();
+
+        $this->expectException(ForbiddenOperationException::class);
+
+        $this->service->reject($soId);
+    }
+
+    public function test_cancel_moves_a_draft_so_to_cancelled(): void
+    {
+        $soId = $this->createDraftSo();
+
+        $this->service->cancel($soId);
+
+        self::assertSame(SalesOrderStatus::Cancelled, $this->service->find($soId)->status);
+    }
+
+    public function test_goods_issue_of_an_approved_order_without_items_is_refused(): void
+    {
+        $so = $this->salesOrders->save(new SalesOrder(null, $this->customerId, $this->warehouseId, SalesOrderStatus::Approved, self::CREATOR_ID, self::APPROVER_ID));
+
+        $this->expectException(ForbiddenOperationException::class);
+        $this->expectExceptionMessage('tidak memiliki item');
+
+        $this->service->processGoodsIssue((int) $so->id, self::APPROVER_ID);
+    }
+
+    public function test_create_reports_every_invalid_header_and_item_field(): void
+    {
+        try {
+            $this->service->create(
+                ['customer_id' => 0, 'warehouse_id' => 999],
+                [['product_id' => 999, 'qty' => 'abc', 'sell_price' => 'gratis']],
+                self::CREATOR_ID,
+            );
+            self::fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            self::assertSame(
+                ['customer_id', 'warehouse_id', 'item_0_product', 'item_0_qty', 'item_0_price'],
+                array_keys($e->errors())
+            );
+        }
+    }
+
+    public function test_detail_resolves_names_and_includes_ledger(): void
+    {
+        $soId = $this->createDraftSo(qty: 2);
+        $this->service->submit($soId);
+        $this->service->approve($soId, self::APPROVER_ID);
+        $this->service->processGoodsIssue($soId, self::APPROVER_ID);
+
+        $detail = $this->service->detail($soId);
+
+        self::assertNotNull($detail);
+        self::assertSame('Customer Test', $detail['customerName']);
+        self::assertSame('Gudang Test', $detail['warehouseName']);
+        self::assertSame('Produk SO Test', $detail['items'][0]['productName']);
+        self::assertSame('SKU-SO-TEST', $detail['items'][0]['productSku']);
+        self::assertCount(1, $detail['ledger']);
+    }
+
+    public function test_detail_falls_back_to_dash_for_missing_references(): void
+    {
+        $so = $this->salesOrders->save(new SalesOrder(null, 999, 999, SalesOrderStatus::Draft, self::CREATOR_ID, null));
+        $this->items->insertMany((int) $so->id, [['product_id' => 999, 'qty' => 1, 'sell_price' => 1]]);
+
+        $detail = $this->service->detail((int) $so->id);
+
+        self::assertNotNull($detail);
+        self::assertSame('-', $detail['customerName']);
+        self::assertSame('-', $detail['warehouseName']);
+        self::assertSame('-', $detail['items'][0]['productName']);
+        self::assertSame('-', $detail['items'][0]['productSku']);
+    }
+
+    public function test_detail_of_unknown_so_is_null(): void
+    {
+        self::assertNull($this->service->detail(999));
+    }
+
+    public function test_paginate_scopes_to_owner_and_normalizes_paging(): void
+    {
+        $mine = $this->createDraftSo();
+        $this->service->create(
+            ['customer_id' => $this->customerId, 'warehouse_id' => $this->warehouseId],
+            [['product_id' => $this->productId, 'qty' => 1, 'sell_price' => 2000]],
+            self::APPROVER_ID, // someone else's order
+        );
+
+        $own = $this->service->paginate([], self::CREATOR_ID, 'ASC', page: 0, perPage: 25);
+        self::assertSame(1, $own['page']);
+        self::assertSame(25, $own['perPage']);
+        self::assertSame('asc', $own['sortDir']);
+        self::assertSame([$mine], array_column($own['items'], 'id'));
+
+        $everyone = $this->service->paginate(['status' => 'Draft'], null, 'desc', page: 1, perPage: 1);
+        self::assertSame(2, $everyone['total']);
+        self::assertSame(2, $everyone['totalPages']);
+        self::assertSame('desc', $everyone['sortDir']);
     }
 }

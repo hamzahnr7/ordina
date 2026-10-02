@@ -61,8 +61,10 @@ final class ProductImageUploader
         $filename = bin2hex(random_bytes(16)) . '.' . $extension;
         $destination = rtrim($this->uploadDir, '/') . '/' . $filename;
 
+        // move_uploaded_file() is only reachable from a real HTTP POST upload -
+        // is_uploaded_file() is always false under CLI/PHPUnit, hence the ignore.
         $moved = is_uploaded_file($file['tmp_name'])
-            ? move_uploaded_file($file['tmp_name'], $destination)
+            ? move_uploaded_file($file['tmp_name'], $destination) // @codeCoverageIgnore
             : rename($file['tmp_name'], $destination); // test/CLI context - no real HTTP upload
 
         if (!$moved) {
