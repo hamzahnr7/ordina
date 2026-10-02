@@ -51,8 +51,7 @@ final class SalesOrderController extends Controller
         ]);
         $sortDir = ($_GET['sort'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $requestedPerPage = (int) ($_GET['per_page'] ?? 10);
-        $perPage = in_array($requestedPerPage, [10, 25, 50], true) ? $requestedPerPage : 10;
+        $perPage = $this->perPageFromQuery();
         $role = $this->currentRole();
         $ownerId = $role === Role::Sales ? (int) $this->currentUser()['id'] : null;
 
@@ -87,7 +86,7 @@ final class SalesOrderController extends Controller
         $this->authorize(Permission::CreateSalesOrder);
 
         try {
-            $so = $this->service()->create($_POST, $this->parseItemsFromPost(), (int) $this->currentUser()['id']);
+            $so = $this->service()->create($_POST, $this->itemRowsFromPost('qty', 'sell_price'), (int) $this->currentUser()['id']);
         } catch (ValidationException $e) {
             Session::flash('errors', $e->errors());
             Session::flash('old', $_POST);
@@ -243,29 +242,6 @@ final class SalesOrderController extends Controller
         }
     }
 
-    /** @return list<array{product_id: mixed, qty: mixed, sell_price: mixed}> */
-    private function parseItemsFromPost(): array
-    {
-        $productIds = $_POST['items']['product_id'] ?? [];
-        $qtys = $_POST['items']['qty'] ?? [];
-        $prices = $_POST['items']['sell_price'] ?? [];
-
-        $items = [];
-
-        foreach ($productIds as $index => $productId) {
-            if ((string) $productId === '') {
-                continue;
-            }
-
-            $items[] = [
-                'product_id' => $productId,
-                'qty' => $qtys[$index] ?? null,
-                'sell_price' => $prices[$index] ?? null,
-            ];
-        }
-
-        return $items;
-    }
 
     private function service(): SalesOrderService
     {

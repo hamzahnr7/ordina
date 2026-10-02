@@ -12,6 +12,45 @@ use App\Domain\Role;
 
 abstract class Controller
 {
+    private const DEFAULT_PER_PAGE = 10;
+    private const PER_PAGE_OPTIONS = [10, 25, 50];
+
+    /** Rows per page from `?per_page=`, limited to the sizes the list pages offer (FIND-01). */
+    protected function perPageFromQuery(): int
+    {
+        $requested = (int) ($_GET['per_page'] ?? self::DEFAULT_PER_PAGE);
+
+        return in_array($requested, self::PER_PAGE_OPTIONS, true) ? $requested : self::DEFAULT_PER_PAGE;
+    }
+
+    /**
+     * Turns the PO/SO create forms' parallel `items[field][]` arrays into one
+     * row per order line, skipping a row the user left without a product.
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function itemRowsFromPost(string ...$fields): array
+    {
+        $productIds = $_POST['items']['product_id'] ?? [];
+        $items = [];
+
+        foreach ($productIds as $index => $productId) {
+            if ((string) $productId === '') {
+                continue;
+            }
+
+            $row = ['product_id' => $productId];
+
+            foreach ($fields as $field) {
+                $row[$field] = $_POST['items'][$field][$index] ?? null;
+            }
+
+            $items[] = $row;
+        }
+
+        return $items;
+    }
+
     /** @param array<string, mixed> $data */
     protected function view(string $view, array $data = []): void
     {

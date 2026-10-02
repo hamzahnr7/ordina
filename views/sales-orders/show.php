@@ -10,11 +10,6 @@
  * @var bool $canCancel
  * @var bool $canIssue
  */
-$statusBadge = match ($salesOrder->status->value) {
-    'Draft' => 'badge-muted',
-    'Cancelled' => 'badge-danger',
-    default => 'badge-success',
-};
 ?>
 <div class="page-head">
     <div class="page-head-text">
@@ -22,7 +17,7 @@ $statusBadge = match ($salesOrder->status->value) {
             <a href="/sales-orders" class="icon-btn back-btn" aria-label="Kembali ke daftar Sales Order">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>
             </a>
-            <h1>SO-<?= str_pad((string) $salesOrder->id, 5, '0', STR_PAD_LEFT) ?> <span class="badge <?= $statusBadge ?>"><?= htmlspecialchars($salesOrder->status->label(), ENT_QUOTES) ?></span></h1>
+            <h1>SO-<?= str_pad((string) $salesOrder->id, 5, '0', STR_PAD_LEFT) ?> <span class="badge <?= $salesOrder->status->badgeClass() ?>"><?= htmlspecialchars($salesOrder->status->label(), ENT_QUOTES) ?></span></h1>
         </div>
     </div>
 </div>

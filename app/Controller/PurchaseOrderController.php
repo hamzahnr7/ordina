@@ -43,8 +43,7 @@ final class PurchaseOrderController extends Controller
         ]);
         $sortDir = ($_GET['sort'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $requestedPerPage = (int) ($_GET['per_page'] ?? 10);
-        $perPage = in_array($requestedPerPage, [10, 25, 50], true) ? $requestedPerPage : 10;
+        $perPage = $this->perPageFromQuery();
 
         $this->view('purchase-orders/index', [
             'title' => 'Purchase Order',
@@ -76,7 +75,7 @@ final class PurchaseOrderController extends Controller
         $this->authorizeAny(Permission::CreatePurchaseOrder, Permission::ProposePurchaseOrder);
 
         try {
-            $po = $this->service()->create($_POST, $this->parseItemsFromPost(), (int) $this->currentUser()['id']);
+            $po = $this->service()->create($_POST, $this->itemRowsFromPost('qty_ordered', 'buy_price'), (int) $this->currentUser()['id']);
         } catch (ValidationException $e) {
             Session::flash('errors', $e->errors());
             Session::flash('old', $_POST);
@@ -162,30 +161,6 @@ final class PurchaseOrderController extends Controller
         }
 
         $this->redirect("/purchase-orders/{$id}");
-    }
-
-    /** @return list<array{product_id: mixed, qty_ordered: mixed, buy_price: mixed}> */
-    private function parseItemsFromPost(): array
-    {
-        $productIds = $_POST['items']['product_id'] ?? [];
-        $qtys = $_POST['items']['qty_ordered'] ?? [];
-        $prices = $_POST['items']['buy_price'] ?? [];
-
-        $items = [];
-
-        foreach ($productIds as $index => $productId) {
-            if ((string) $productId === '') {
-                continue; // blank template row the user didn't fill in
-            }
-
-            $items[] = [
-                'product_id' => $productId,
-                'qty_ordered' => $qtys[$index] ?? null,
-                'buy_price' => $prices[$index] ?? null,
-            ];
-        }
-
-        return $items;
     }
 
     private function service(): PurchaseOrderService

@@ -5,11 +5,6 @@ $queryWithout = static function (array $overrides) use ($filters, $sortDir, $per
 };
 $rangeStart = $result['total'] === 0 ? 0 : (($result['page'] - 1) * $result['perPage'] + 1);
 $rangeEnd = min($result['total'], $result['page'] * $result['perPage']);
-$statusBadge = static fn (string $status): string => match ($status) {
-    'Draft' => 'badge-muted',
-    'Cancelled' => 'badge-danger',
-    default => 'badge-success',
-};
 ?>
 <div class="page-head">
     <div class="page-head-text">
@@ -92,7 +87,7 @@ $statusBadge = static fn (string $status): string => match ($status) {
             <td data-label="Gudang"><?= htmlspecialchars($so['warehouse_name'], ENT_QUOTES) ?></td>
             <td data-label="Tanggal"><?= htmlspecialchars($so['created_at'], ENT_QUOTES) ?></td>
             <td data-label="Status">
-                <span class="badge <?= $statusBadge($so['status']) ?>"><?= htmlspecialchars($so['status'], ENT_QUOTES) ?></span>
+                <span class="badge <?= \App\Domain\SalesOrderStatus::from($so['status'])->badgeClass() ?>"><?= htmlspecialchars($so['status'], ENT_QUOTES) ?></span>
             </td>
         </tr>
     <?php endforeach; ?>

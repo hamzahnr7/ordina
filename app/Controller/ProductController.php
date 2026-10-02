@@ -37,8 +37,7 @@ final class ProductController extends Controller
         ]);
 
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $requestedPerPage = (int) ($_GET['per_page'] ?? 10);
-        $perPage = in_array($requestedPerPage, [10, 25, 50], true) ? $requestedPerPage : 10;
+        $perPage = $this->perPageFromQuery();
         $result = $this->service()->paginate($filters, $page, $perPage);
 
         $this->view('products/index', [

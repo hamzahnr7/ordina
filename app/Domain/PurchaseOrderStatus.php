@@ -24,6 +24,16 @@ enum PurchaseOrderStatus: string
         };
     }
 
+    /** CSS badge class for list/detail pages - one place instead of a match() per view. */
+    public function badgeClass(): string
+    {
+        return match ($this) {
+            self::Draft => 'badge-muted',
+            self::Cancelled => 'badge-danger',
+            self::Ordered, self::PartiallyReceived, self::Received => 'badge-success',
+        };
+    }
+
     public function canBeCancelled(): bool
     {
         return $this !== self::Received && $this !== self::Cancelled;

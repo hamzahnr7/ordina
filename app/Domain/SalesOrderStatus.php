@@ -24,6 +24,16 @@ enum SalesOrderStatus: string
         };
     }
 
+    /** CSS badge class for list/detail pages - one place instead of a match() per view. */
+    public function badgeClass(): string
+    {
+        return match ($this) {
+            self::Draft => 'badge-muted',
+            self::Cancelled => 'badge-danger',
+            self::PendingApproval, self::Approved, self::Fulfilled => 'badge-success',
+        };
+    }
+
     public function canBeSubmitted(): bool
     {
         return $this === self::Draft;
