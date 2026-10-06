@@ -28,22 +28,35 @@ for the full specification this repo implements.
 cp .env.example .env
 docker compose up --build
 ```
-The `mysql` service auto-runs `database/schema-and-seed.sql` on first boot
-(empty volume). App will be at http://localhost:8080.
+The `mysql` service auto-runs `database/schema-and-seed.sql` and
+`database/test-db-init.sql` on first boot (empty volume). The app is at
+http://localhost:8080 once `docker compose ps` shows all services `healthy`.
 
-Generate real password hashes for the seed users before relying on them:
+To start again from the original seed data, recreate the database volume.
+This **deletes all data** entered through the app:
 ```bash
-docker compose exec web php scripts/hash-password.php "YourPassword123"
-# paste the output over the REPLACE_WITH_GENERATED_HASH placeholders in
-# database/schema-and-seed.sql, then recreate the mysql volume to reseed.
+docker compose down -v
+docker compose up -d --build
 ```
 
-### Demo accounts (after regenerating hashes)
-| Role | Email |
-|------|-------|
-| Admin | admin@ordina.test |
-| Sales | sales1@ordina.test / sales2@ordina.test |
-| Warehouse Staff | wh1@ordina.test / wh2@ordina.test |
+### Demo accounts
+All demo accounts use the password **`admin123`**. These are local demo
+credentials from the seed data only; never reuse them outside a local
+environment.
+
+| Role | Name | Email |
+|------|------|-------|
+| Admin | Admin Utama | admin@ordina.test |
+| Sales | Sales Satu / Sales Dua | sales1@ordina.test / sales2@ordina.test |
+| Warehouse Staff | Gudang Satu / Gudang Dua | wh1@ordina.test / wh2@ordina.test |
+
+Every user can change their own password at `/profile`. To put a different
+password into the seed itself, generate a hash and replace the
+`password_hash` values in `database/schema-and-seed.sql`, then recreate the
+volume as above:
+```bash
+docker compose exec web php scripts/hash-password.php "NewPassword123"
+```
 
 ## Auth, roles & menu access
 Login (`/login`), session-based auth, and role-based menu/authorization are
@@ -155,6 +168,17 @@ docker compose exec web composer test:unit
 docker compose exec web composer test:integration
 docker compose exec web composer test:coverage      # unit test + code coverage report
 docker compose exec web composer analyse            # PHPStan level 5
+```
+
+### HTTP smoke test
+`scripts/smoke-test.php` logs in as each role over real HTTP and runs 18
+checks against the running app: report CSV row counts per date range and
+role, 403s, the login redirect, logout, and API 401/404/200. It is
+read-only. The report numbers assume a fresh seed. Exit code 0 means
+everything passed. Scenarios: `docs/testing/test-scenarios.md` (RPT-*, ERR-*).
+```bash
+docker compose exec web php scripts/smoke-test.php
+php scripts/smoke-test.php http://localhost:8080   # from the host
 ```
 
 ### Code coverage
