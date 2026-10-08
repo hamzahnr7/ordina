@@ -9,3 +9,4 @@ docker/mysql-data/
 docker/redis-data/
 /public/uploads/products/*
 !/public/uploads/products/.gitkeep
+/.scannerwork/

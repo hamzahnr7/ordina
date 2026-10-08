@@ -36,3 +36,6 @@ database
 docs
 *.md
 !README.md
+
+# SonarScanner work dir
+.scannerwork

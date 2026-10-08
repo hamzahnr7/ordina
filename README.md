@@ -181,6 +181,18 @@ docker compose exec web php scripts/smoke-test.php
 php scripts/smoke-test.php http://localhost:8080   # from the host
 ```
 
+### SonarQube scan
+Static analysis with SonarQube Community Build 26.9.0.129388, run fully in
+Docker. One-time setup takes about 10 minutes: start the server, create the
+`ordina` project and put a token in `.env` as `SONAR_TOKEN`. After that a
+scan is one command:
+```powershell
+docker compose -f compose.sonar.yaml up -d                     # SonarQube at http://localhost:9000
+powershell -ExecutionPolicy Bypass -File scripts/sonar-scan.ps1
+```
+Step-by-step guide, macOS/Linux commands and troubleshooting:
+`docs/quality/sonarqube.md`.
+
 ### Code coverage
 `composer test:coverage` runs the Unit suite with the PCOV driver switched on
 for that run only (it's installed in the image but disabled by default, so
