@@ -60,14 +60,45 @@ final class PurchaseOrderController extends Controller
     {
         $this->authorizeAny(Permission::CreatePurchaseOrder, Permission::ProposePurchaseOrder);
 
+        $old = Session::pullFlash('old', []);
+        $restockProductId = (int) ($_GET['product_id'] ?? 0);
+
+        if ($old === [] && $restockProductId > 0) {
+            $old = $this->restockPrefill($restockProductId);
+        }
+
         $this->view('purchase-orders/create', [
             'title' => 'Buat Purchase Order',
             'suppliers' => $this->supplierService()->listActive(),
             'warehouses' => $this->warehouseService()->listActive(),
             'products' => $this->productService()->listActive(),
             'errors' => Session::pullFlash('errors', []),
-            'old' => Session::pullFlash('old', []),
+            'old' => $old,
         ]);
+    }
+
+    /**
+     * The "Buat PO" shortcut on a low-stock product row: one item row for that
+     * product, qty suggested as its shortfall to the reorder point. Shaped like
+     * the flashed `old` input, so the form renders it the same way (VAL-01).
+     *
+     * @return array{items?: array{product_id: list<string>, qty_ordered: list<string>, buy_price: list<string>}}
+     */
+    private function restockPrefill(int $productId): array
+    {
+        $detail = $this->productService()->detail($productId);
+
+        if ($detail === null || !$detail['product']->isActive) {
+            return [];
+        }
+
+        $product = $detail['product'];
+
+        return ['items' => [
+            'product_id' => [(string) $product->id],
+            'qty_ordered' => [(string) max(1, $product->reorderPoint - $detail['totalStock'])],
+            'buy_price' => [(string) $product->buyPrice],
+        ]];
     }
 
     public function store(): void

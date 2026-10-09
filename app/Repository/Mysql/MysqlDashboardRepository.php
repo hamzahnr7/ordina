@@ -47,7 +47,7 @@ final class MysqlDashboardRepository implements DashboardRepositoryInterface
     public function lowStockProducts(int $limit): array
     {
         $stmt = $this->connection->prepare(
-            'SELECT p.sku, p.name, p.reorder_point, COALESCE(s.total_stock, 0) AS total_stock '
+            'SELECT p.id, p.sku, p.name, p.reorder_point, COALESCE(s.total_stock, 0) AS total_stock '
             . self::LOW_STOCK_BASE
             . ' ORDER BY (p.reorder_point - COALESCE(s.total_stock, 0)) DESC LIMIT :limit'
         );

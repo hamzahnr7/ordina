@@ -73,7 +73,7 @@ $rangeEnd = min($result['total'], $result['page'] * $result['perPage']);
     <thead>
         <tr>
             <th>SKU</th><th>Nama</th><th>Kategori</th><th>Unit</th><th>Harga Jual</th><th>Stok</th><th>Status</th>
-            <?php if ($canManage): ?><th>Aksi</th><?php endif; ?>
+            <?php if ($canManage || $canRestock): ?><th>Aksi</th><?php endif; ?>
         </tr>
     </thead>
     <tbody>
@@ -97,12 +97,17 @@ $rangeEnd = min($result['total'], $result['page'] * $result['perPage']);
                     <?= ((int) $item['is_active']) ? 'Aktif' : 'Nonaktif' ?>
                 </span>
             </td>
-            <?php if ($canManage): ?>
+            <?php if ($canManage || $canRestock): ?>
                 <td data-label="Aksi">
-                    <a href="/products/<?= (int) $item['id'] ?>/edit" class="btn btn-secondary">Edit</a>
-                    <form method="post" action="/products/<?= (int) $item['id'] ?>/toggle-active" style="display:inline;">
-                        <button type="submit" class="<?= ((int) $item['is_active']) ? 'btn-danger' : 'btn-secondary' ?>"><?= ((int) $item['is_active']) ? 'Nonaktifkan' : 'Aktifkan' ?></button>
-                    </form>
+                    <?php if ($canRestock && $isLow && (int) $item['is_active']): ?>
+                        <a href="/purchase-orders/create?product_id=<?= (int) $item['id'] ?>" class="icon-btn icon-btn-primary" title="Buat PO untuk restock <?= htmlspecialchars($item['name'], ENT_QUOTES) ?>" aria-label="Buat PO untuk restock <?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14h6"/></svg></a>
+                    <?php endif; ?>
+                    <?php if ($canManage): ?>
+                        <a href="/products/<?= (int) $item['id'] ?>/edit" class="btn btn-secondary">Edit</a>
+                        <form method="post" action="/products/<?= (int) $item['id'] ?>/toggle-active" style="display:inline;">
+                            <button type="submit" class="<?= ((int) $item['is_active']) ? 'btn-danger' : 'btn-secondary' ?>"><?= ((int) $item['is_active']) ? 'Nonaktifkan' : 'Aktifkan' ?></button>
+                        </form>
+                    <?php endif; ?>
                 </td>
             <?php endif; ?>
         </tr>

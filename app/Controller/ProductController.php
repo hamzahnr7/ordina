@@ -39,6 +39,7 @@ final class ProductController extends Controller
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = $this->perPageFromQuery();
         $result = $this->service()->paginate($filters, $page, $perPage);
+        $role = $this->currentRole();
 
         $this->view('products/index', [
             'title' => 'Produk',
@@ -46,7 +47,10 @@ final class ProductController extends Controller
             'filters' => $filters,
             'perPage' => $perPage,
             'categories' => $this->categoryService()->list(),
-            'canManage' => $this->currentRole() !== null && Gate::allows($this->currentRole(), Permission::ManageMasterData),
+            'canManage' => $role !== null && Gate::allows($role, Permission::ManageMasterData),
+            // Admin creates POs, Warehouse Staff proposes them - both get the low-stock "Buat PO" shortcut.
+            'canRestock' => $role !== null
+                && (Gate::allows($role, Permission::CreatePurchaseOrder) || Gate::allows($role, Permission::ProposePurchaseOrder)),
             'success' => Session::pullFlash('success'),
         ]);
     }
